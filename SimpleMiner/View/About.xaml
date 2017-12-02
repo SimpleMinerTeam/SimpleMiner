@@ -1,0 +1,18 @@
+﻿<Window x:Class="SimpleCPUMiner.View.About"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SimpleCPUMiner.View"
+        mc:Ignorable="d"
+        x:Name="AboutWindow"
+        Title="About" Height="300" Width="300" WindowStartupLocation="CenterScreen" Icon="/SimpleMiner;component/Resources/miner_logo_blue.png" ResizeMode="NoResize">
+    <Grid>
+        <Image HorizontalAlignment="Left" Height="100" Margin="95,48,0,0" VerticalAlignment="Top" Width="100" Source="/SimpleMiner;component/Resources/miner_logo_blue.png"/>
+        <Label Content="{Binding Header}" HorizontalAlignment="Center" Margin="0,12,0,0" VerticalAlignment="Top" FontSize="20" FontWeight="Bold"/>
+        <Label Content="{Binding Version}" HorizontalAlignment="Center" Margin="0,145,0,0" VerticalAlignment="Top"/>
+        <TextBlock Text="{Binding AboutText}" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Stretch" Margin="5,172,5,0" VerticalAlignment="Top" Height="40" />
+        <Label Content="{Binding Contact}" HorizontalAlignment="Center" Margin="0,205,0,0" VerticalAlignment="Top"/>
+        <Button Content="Close" HorizontalAlignment="Center" Margin="0,0,0,5" VerticalAlignment="Bottom" Width="75" Command="{Binding CloseWindowCommand}" CommandParameter="{Binding ElementName=AboutWindow}" />
+    </Grid>
+</Window>

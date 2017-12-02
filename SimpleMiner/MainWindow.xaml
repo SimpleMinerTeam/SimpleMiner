@@ -1,0 +1,129 @@
+﻿<Window x:Class="SimpleCPUMiner.MainWindow"
+        Title="{Binding MainWindowTitle}"
+        x:Name="MyMainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SimpleCPUMiner"
+        mc:Ignorable="d"
+        Height="500" Width="880" WindowStartupLocation="CenterScreen" ResizeMode="CanMinimize" Icon="Resources/miner_logo_blue.png" >
+    <Window.Resources>
+        <Style x:Key="AlternatingListViewItemStyle" TargetType="{x:Type ListViewItem}">
+            <Style.Triggers>
+                <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                    <Setter Property="Background" Value="#FFDDF1F7"></Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_Settings" Visibility="Collapsed">
+                <MenuItem Header="_Add to Defender exclusion"/>
+            </MenuItem>
+            <MenuItem Header="_About" Command="{Binding ShowAboutCommand}">
+            </MenuItem>
+        </Menu>
+        <Grid Name="MainGrid" OpacityMask="#FFB9F5F0">
+            <Grid.Background>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <GradientStop Color="#FFD7DCF1" Offset="0"/>
+                    <GradientStop Color="White" Offset="1"/>
+                </LinearGradientBrush>
+            </Grid.Background>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition></ColumnDefinition>
+                <ColumnDefinition></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="3*"></RowDefinition>
+                <RowDefinition Height="2*"></RowDefinition>
+                <RowDefinition Height="3*"></RowDefinition>
+            </Grid.RowDefinitions>
+            <Label x:Name="labelOutput" Content="Miner output" Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+            <ListView x:Name="listViewOutputString" Margin="5,21,5,4" Grid.Row="1" Grid.RowSpan="2" ItemsSource="{Binding MinerOutputString}" ScrollViewer.ScrollChanged="ScrollViewer_ScrollChanged" ItemContainerStyle="{StaticResource AlternatingListViewItemStyle}" AlternationCount="2" >
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}" TextWrapping="Wrap" Width="390" />
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            <GroupBox x:Name="gbPool" Grid.Column="1" Header="Pool settings" Margin="5,0,5,5" >
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="2*"></RowDefinition>
+                        <RowDefinition Height="5*"></RowDefinition>
+                        <RowDefinition Height="3*"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="3*"></ColumnDefinition>
+                        <ColumnDefinition></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Label x:Name="labelPoolAddress" Content="Pool address:" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                    <TextBox x:Name="tbURL" TabIndex="1" Height="23" TextWrapping="Wrap" Margin="80,3,5,0" IsEnabled="{Binding IsIdle}" Text="{Binding SelectedMinerSettings.URL}" VerticalAlignment="Top" TextAlignment="Left"/>
+                    <Label x:Name="labelPort" Content="Port:" Grid.Column="1"  HorizontalAlignment="Left" VerticalAlignment="Top" Width="35"/>
+                    <TextBox x:Name="tbPort" TabIndex="2" Grid.Column="1" HorizontalAlignment="Stretch" Height="23" MaxLength="5" Margin="35,3,5,0" IsEnabled="{Binding IsIdle}" TextWrapping="Wrap" Text="{Binding SelectedMinerSettings.Port}" VerticalAlignment="Top" PreviewTextInput="PortPrevTextInput" TextAlignment="Center" />
+                    <Label x:Name="labelWalletAddress" Grid.Row="1" Content="Wallet address:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="95"/>
+                    <TextBox x:Name="tbWalletAddress" Grid.Row="1" Margin="5,22,5,0" Grid.ColumnSpan="2" TabIndex="3" HorizontalAlignment="Stretch" Height="46" TextWrapping="Wrap" IsEnabled="{Binding IsIdle}" Text="{Binding SelectedMinerSettings.Username}" VerticalAlignment="Top" FontSize="11" TextAlignment="Left"/>
+                    <Label x:Name="labelPassword" Grid.Row="2" Content="Password:" HorizontalAlignment="Left" Margin="0,3,0,0" VerticalAlignment="Top" Width="61"/>
+                    <TextBox x:Name="tbPassword" Grid.Row="2" Grid.ColumnSpan="2" TabIndex="4" HorizontalAlignment="Stretch" Height="23" Margin="65,5,5,0"  TextWrapping="Wrap"  IsEnabled="{Binding IsIdle}" Text="{Binding SelectedMinerSettings.Password}" VerticalAlignment="Top" TextAlignment="Left"/>
+                </Grid>
+            </GroupBox>
+            <GroupBox x:Name="gbCPUSettings" Grid.Column="1" Grid.Row="1" Header="CPU settings" Margin="5" >
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition></ColumnDefinition>
+                        <ColumnDefinition></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Label x:Name="labelThreads" Content="Number of CPU threads (0 = auto)" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                    <TextBox x:Name="tbThreads" TabIndex="5" Grid.Column="1" HorizontalAlignment="Left" Height="23" MaxLength="2" IsEnabled="{Binding IsIdle}" TextWrapping="Wrap" Text="{Binding ThreadNumber, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Width="48" TextAlignment="Center" />
+                    <Label x:Name="labelMaxCPUUsage" Grid.Row="1" Grid.ColumnSpan="2" Content="Maximum CPU usage" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                    <Slider x:Name="sliderMaxCPUUsage" Grid.Row="1" Grid.ColumnSpan="2" Margin="125,0,35,0" TabIndex="6" HorizontalAlignment="Stretch"  VerticalAlignment="Center" IsEnabled="{Binding IsEnabledCPUThreadAuto}" Minimum="1" Maximum="100" Value="{Binding SelectedMinerSettings.MaxCPUUsage}" TickFrequency="1" IsSnapToTickEnabled="True"/>
+                    <TextBox x:Name="tbSlideValue" Grid.Row="1" Margin="0,0,5,0" Grid.Column="1" Grid.ColumnSpan="2" TabIndex="7" HorizontalAlignment="Right" Height="23" MaxLength="4" IsEnabled="{Binding IsEnabledCPUThreadAuto}" TextWrapping="Wrap" Text="{Binding ElementName=sliderMaxCPUUsage, Path=Value, UpdateSourceTrigger=PropertyChanged}" TextAlignment="Right" VerticalAlignment="Center" Width="27" />
+                    <Label x:Name="labelCpuAffinity" Grid.Row="2" Content="CPU Affinity:" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                    <TextBox x:Name="tbCpuAffinity" Grid.Row="2" Margin="75,0,0,0" HorizontalAlignment="Left" TabIndex="8" Height="23" TextWrapping="Wrap" IsEnabled="{Binding IsIdle}" VerticalAlignment="Center" Text="{Binding SelectedMinerSettings.CPUAffinity}" Width="120"/>
+                    <Button x:Name="btnCpuAffinity" Grid.Row="2" Margin="210,0,0,0" Command="{Binding CpuAffinityCommand}" CommandParameter="{Binding SelectedMinerSettings.CPUAffinity}" IsEnabled="{Binding IsIdle}" Height="50" Width="50">
+                        <Grid>
+                            <Image Stretch="Fill" Source="/SimpleMiner;component/Resources/miner_logo_blue.png"/>
+                        </Grid>
+                    </Button>
+                    <Button Grid.Row="2" Grid.Column="2" Height="24" Width="24" HorizontalAlignment="Left" IsEnabled="{Binding IsIdle}" TabIndex="9" Command="{Binding CpuAffinityCommand}" CommandParameter="{Binding SelectedMinerSettings.NumberOfThreads}">
+                        <Grid>
+                            <Image HorizontalAlignment="Left" Stretch="Fill" Source="Resources/iconCog.png"/>
+                        </Grid>
+                    </Button>
+
+                </Grid>
+            </GroupBox>
+            <StackPanel Grid.Column="1" Grid.Row="2">
+                <Grid Margin="15,0,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition></ColumnDefinition>
+                        <ColumnDefinition></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="32"></RowDefinition>
+                        <RowDefinition Height="32"></RowDefinition>
+                        <RowDefinition Height="32"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <CheckBox x:Name="checkBoxIsStartsWithWindows" Grid.Row="1" Margin="3" Command="{Binding LaunchOnWindowsStartup, Mode=OneWay}" TabIndex="12" Content="Launch on Windows startup" HorizontalAlignment="Left" VerticalAlignment="Center" IsChecked="{Binding SelectedMinerSettings.IsLaunchOnWindowsStartup}"/>
+                    <CheckBox x:Name="checkBoxIsAutostartMining" TabIndex="10" Margin="3" Content="Autostart mining" HorizontalAlignment="Left" VerticalAlignment="Center" IsChecked="{Binding IsAutoStartMining}"/>
+                    <TextBox x:Name="tbStartingDelayInSec" Grid.Column="1" TabIndex="11" HorizontalAlignment="Right" Margin="5,0,40,0" Height="23" IsEnabled="{Binding IsIdle}" MaxLength="5" TextWrapping="Wrap" Text="{Binding StartingDelayInSec}" Width="48" PreviewTextInput="PortPrevTextInput" TextAlignment="Center" />
+                    <Label x:Name="labelStartingDelayInSec" Grid.Column="1" Margin="3" Content="Starting delay (sec):" HorizontalAlignment="Left"  VerticalAlignment="Center" Width="115"/>
+                    <CheckBox x:Name="checkBoxIsMinimizeToTray" Grid.Row="2" Margin="3" TabIndex="14" Content="Minimize to tray" HorizontalAlignment="Left" VerticalAlignment="Center" IsChecked="{Binding SelectedMinerSettings.IsMinimizeToTray}"/>
+                    <CheckBox x:Name="checkBoxIsLogging" Grid.Row="2" Grid.Column="1" Margin="3" TabIndex="15" Content="Log to a file" IsEnabled="{Binding IsIdle}" HorizontalAlignment="Left"  VerticalAlignment="Center" IsChecked="{Binding SelectedMinerSettings.IsLogging}"/>
+                    <CheckBox x:Name="checkBoxIsNicehashSupport" Grid.Row="1" Margin="3" Grid.Column="1" TabIndex="13" Content="Nicehash support" IsEnabled="{Binding IsIdle}" HorizontalAlignment="Left"  VerticalAlignment="Center" IsChecked="{Binding SelectedMinerSettings.IsNicehashSupport}"/>
+                </Grid>
+                <Button x:Name="btnStartMining" TabIndex="16" Margin="5,0,5,5" Command="{Binding startMiningCommand , Mode=OneWay}" Content="{Binding StartMiningButtonContent}" FontSize="14" FontWeight="Bold" FontFamily="Courier New" HorizontalAlignment="Stretch" Width="268" Height="29" VerticalAlignment="Top"/>
+                <Button x:Name="btnExit" TabIndex="17" Content="Exit" Command="{Binding CloseWindowCommand, Mode=OneWay}" CommandParameter="{Binding ElementName=MyMainWindow}" FontWeight="Bold" FontSize="14" FontFamily="Courier New" HorizontalAlignment="Stretch" Width="268" Height="29" VerticalAlignment="Top"/>
+            </StackPanel>
+            <WebBrowser x:Name="wbContent" Source="http://etnpool.sytes.net/cpuminer.html" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,5,5,0" Navigating="wbContent_Navigating" />
+        </Grid>
+    </DockPanel>
+</Window>

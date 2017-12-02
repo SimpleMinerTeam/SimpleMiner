@@ -1,0 +1,40 @@
+﻿<Window x:Class="SimpleCPUMiner.View.CpuAffinity"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SimpleCPUMiner.View"
+        mc:Ignorable="d"
+        x:Name="CpuAffinityWindow"
+        Title="Cpu Affinity" Height="250" Width="300" WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="24"></RowDefinition>
+            <RowDefinition Height="3*"></RowDefinition>
+            <RowDefinition></RowDefinition>
+            <RowDefinition></RowDefinition>
+        </Grid.RowDefinitions>
+        <Label Content="Installed CPUs:" />
+        <ListView Grid.Row="1" ItemsSource="{Binding CpuList}" Margin="5" >
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <WrapPanel Width="235">
+                        <TextBlock Text="{Binding Name}" TextWrapping="Wrap" Padding="0" Height="18" />
+                        <Label Content="{Binding SpeedMHz}"  Padding="0" Height="18"/>
+                        <Label Content="Mhz, L2: " Padding="0" Height="18" />
+                        <Label Content="{Binding L2Cache}" Padding="0" Height="18" />
+                        <Label Content="MB L3: " Padding="0" Height="18" />
+                        <Label Content="{Binding L3Cache}" Padding="0" Height="18" />
+                        <Label Content="MB physical cores: " Padding="0" Height="18" />
+                        <Label Content="{Binding Cores}" Padding="0" Height="18" />
+                        <Label Content=" logical cores: " Padding="0" Height="18" />
+                        <Label Content="{Binding Threads}" Padding="0" Height="18" />
+                    </WrapPanel>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+        <TextBlock TextWrapping="Wrap" Grid.Row="2" Text="{Binding CpuAffinityOut}" TextAlignment="Center" />
+        <Button Command="{Binding CloseWindowCommand}" CommandParameter="{Binding ElementName=CpuAffinityWindow}" Grid.Row="3" HorizontalAlignment="Left" Content="Close" Margin="5" Padding="5"></Button>
+        <Button Command="{Binding ApplyCommand}" CommandParameter="{Binding ElementName=CpuAffinityWindow}" Grid.Row="3" HorizontalAlignment="Right" Content="Apply" Margin="5" Padding="5"></Button>
+    </Grid>
+</Window>
