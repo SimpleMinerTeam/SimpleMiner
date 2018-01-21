@@ -1,4 +1,3 @@
-=============================
  Simple Miner for CPU mining
 =============================
 
@@ -6,8 +5,20 @@ Simple Miner is a hight performance Cryptonight miner program for CPU mining. Ou
 This miner is free-to-use, however current developer fee is 1.0%. It means the program mining 99 minutes for the user and 1 minute for developers.
 Our program based on XMRig miner.
 
+VERSION HISTORY
+---------------
+v1.1.0.0 (2018/01/21)
+ New features:
+ - Pool managing
+ - Failover support
+ 
+ Bugfix:
+ - Popup web browser window when internet connection lost
 
-System requirements
+v1.0.0.0 (2017/11/28)
+ - Initial release
+
+SYSTEM REQUIREMENTS
 -------------------
 Windows 7/8/8.1/10 x64 operation system
 
@@ -29,6 +40,8 @@ FEATURES
 * Launch on Windows startup option
 
 * Autostart mining option with custom delay
+
+* Help to generate optimal CPU affinity
 
 * Set to maximum CPU usage (when number of CPU thread option is auto)
 
@@ -67,7 +80,7 @@ OPTIONS
 
 
 
-Maximum performance checklist
+MAXIMUM PERFORMANCE CHECKLIST
 -----------------------------
 * Idle operating system
 
@@ -91,12 +104,6 @@ Intel i5-4690 - 234 H/s (Number of threads: auto)
 Intel 2x Xeon e5-2420 - 585 H/s (Number of threads: 12)
 
 AMD Ryzen 1500x - 433 H/s (Number of threads: auto)
-
-
-VERSION HISTORY
----------------
-Simple Miner v1.0.0.0 (2017/11/28)
- - Initial release
 
 
 CONTACT

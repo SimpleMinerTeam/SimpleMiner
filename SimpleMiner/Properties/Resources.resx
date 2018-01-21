@@ -118,11 +118,44 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="cpuminer" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\cpuminer.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="coinBytecoin" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\coinBytecoin.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="coinElectroneum" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\coinElectroneum.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="coinKrb" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\coinKrb.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="coinMonero" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\coinMonero.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="coinOther" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\coinOther.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="coinSumokoin" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\coinSumokoin.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="iconAdd" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\iconAdd.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="iconApply" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\iconApply.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="iconCancel" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\iconCancel.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="iconCog" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\iconCog.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="iconEdit" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\iconEdit.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="iconModify" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\iconModify.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="iconRemove" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\iconRemove.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="miner_logo_blue" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\miner_logo_blue.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>

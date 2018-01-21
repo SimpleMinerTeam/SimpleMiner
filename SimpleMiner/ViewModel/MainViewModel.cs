@@ -15,6 +15,10 @@ using GalaSoft.MvvmLight.Threading;
 using SimpleCPUMiner.View;
 using System.Windows.Threading;
 using System.Runtime;
+using SimpleCPUMiner.Model;
+using static SimpleCPUMiner.Consts;
+using System.Linq;
+using Microsoft.Win32;
 
 namespace SimpleCPUMiner.ViewModel
 {
@@ -28,10 +32,16 @@ namespace SimpleCPUMiner.ViewModel
         public RelayCommand<Window> CloseWindowCommand { get; private set; }
         public RelayCommand<string> CpuAffinityCommand { get; private set; }
         public RelayCommand<int> LaunchOnWindowsStartup { get; private set; }
+        public RelayCommand<string> PoolAddCommand { get; private set; }
+        public RelayCommand<string> PoolRemoveCommand { get; private set; }
+        public RelayCommand<string> PoolModifyCommand { get; private set; }
         public Thread MinerThread { get; set; }
         public ObservableCollection<string> MinerOutputString { get; set;}
+        public List<PoolSettings> Pools { get; set; }
+        public int SelectedPoolIndex { get; set; }
         public bool IsIdle { get; set; }
         public bool isEnabledCPUThreadAuto { get; set; }
+        private PoolSettings _selectedPool;
         private string _threadNumber;
         private bool isAutostartMining;
         private int startingDelayInSec;
@@ -39,6 +49,17 @@ namespace SimpleCPUMiner.ViewModel
         private int tempDelayInSec;
         private bool isCountDown = false;
         private DispatcherTimer timer;
+
+        public PoolSettings SelectedPool {
+            get
+            {
+                return _selectedPool;
+            }
+            set
+            {
+                _selectedPool = value;
+            }
+        }
 
         public string ThreadNumber
         {
@@ -136,10 +157,13 @@ namespace SimpleCPUMiner.ViewModel
             }
         }
 
+        public Action RefreshPools { get; internal set; }
+
         ExeManager MyManager;
 
         public MainViewModel()
         {
+            Pools = new List<PoolSettings>();
             terminateProcess();
             loadConfigFile();
             IsIdle = true;
@@ -148,17 +172,127 @@ namespace SimpleCPUMiner.ViewModel
             ThreadNumber = SelectedMinerSettings.NumberOfThreads;
             isAutostartMining = SelectedMinerSettings.IsAutostartMining;
             StartingDelayInSec = SelectedMinerSettings.StartingDelayInSec;
+            SetCommands();
             MinerSettingsList = new ObservableCollection<MinerSettings>();
-            this.startMiningCommand = new RelayCommand<int>(startMining);
-            this.CloseWindowCommand = new RelayCommand<Window>(CloseWindow);
-            this.LaunchOnWindowsStartup = new RelayCommand<int>(setStartup);
-            this.ShowAboutCommand = new RelayCommand<int>(ShowAbout);
-            this.CpuAffinityCommand = new RelayCommand<string>(ShowCpuAffinity);
             Messenger.Default.Register<MinerOutputMessage>(this, msg => { minerOutputReceived(msg); });
             Messenger.Default.Register<CpuAffinityMessage>(this, msg => { CpuAffinityReceived(msg); });
             tempDelayInSec = SelectedMinerSettings.StartingDelayInSec;
             SelectedMinerSettings.IsLaunchOnWindowsStartup = Utils.IsStartupItem();
             if (SelectedMinerSettings.IsAutostartMining) autoStartMiningWithDelay();
+            SavePools(null);
+        }
+
+        private void SetCommands()
+        {
+            startMiningCommand = new RelayCommand<int>(startMining);
+            CloseWindowCommand = new RelayCommand<Window>(CloseWindow);
+            LaunchOnWindowsStartup = new RelayCommand<int>(setStartup);
+            ShowAboutCommand = new RelayCommand<int>(ShowAbout);
+            CpuAffinityCommand = new RelayCommand<string>(ShowCpuAffinity);
+            PoolAddCommand = new RelayCommand<string>(AddPool);
+            PoolModifyCommand = new RelayCommand<string>(ModifyPool);
+            PoolRemoveCommand = new RelayCommand<string>(RemovePool);
+        }
+
+        private void AddPool(string obj)
+        {
+            var poolSettingWindow = new PoolForm();
+            var poolVM = new PoolFormViewModel()
+            {
+                Pool = new PoolSettings() { IsRemoveable = true, IsGPUPool = true, IsCPUPool = true, CoinType = CoinTypes.OTHER }
+            };
+
+            poolVM.AddPool = AddPool;
+            poolVM.UpdateCoinType();
+            poolSettingWindow.DataContext = poolVM;
+            poolSettingWindow.ShowDialog();
+        }
+
+        private void ModifyPool(string obj)
+        {
+            var poolSettingWindow = new PoolForm();
+            var poolVM = new PoolFormViewModel() {
+                Pool = new PoolSettings() {
+                    CoinType = SelectedPool.CoinType,
+                    FailOverPriority = SelectedPool.FailOverPriority,
+                    IsCPUPool = SelectedPool.IsCPUPool,
+                    IsGPUPool = SelectedPool.IsGPUPool,
+                    IsFailOver = SelectedPool.IsFailOver,
+                    IsMain = SelectedPool.IsMain,
+                    IsRemoveable = SelectedPool.IsRemoveable,
+                    Password = SelectedPool.Password,
+                    Port = SelectedPool.Port,
+                    URL = SelectedPool.URL,
+                    Username = SelectedPool.Username
+                }
+            };
+
+            poolVM.UpdatePoolList = SavePools;
+            poolVM.UpdateCoinType();
+            poolSettingWindow.DataContext = poolVM;
+            poolSettingWindow.ShowDialog();
+        }
+
+        private void SavePools(PoolSettings ps)
+        {
+            if(ps!= null)
+            {
+                if (ps.IsMain)
+                {
+                    var mainPool = Pools.Where(x => x.IsMain).FirstOrDefault();
+                    if (mainPool != null)
+                    {
+                        mainPool.IsMain = false;
+                    }
+                }
+
+                SelectedPool.CoinType = ps.CoinType;
+                SelectedPool.URL = ps.URL;
+                SelectedPool.FailOverPriority = ps.FailOverPriority;
+                SelectedPool.IsCPUPool = ps.IsCPUPool;
+                SelectedPool.IsFailOver = ps.IsFailOver;
+                SelectedPool.IsGPUPool = ps.IsGPUPool;
+                SelectedPool.IsMain = ps.IsMain;
+                SelectedPool.Password = ps.Password;
+                SelectedPool.Port = ps.Port;
+                SelectedPool.Username = ps.Username;
+            }
+
+            var poolzToSave = Pools.ToList();
+            Utils.SerializeObject(Consts.PoolFilePath, poolzToSave);
+            Pools = Pools.OrderByDescending(x=>x.IsMain).ThenByDescending(x=>x.IsFailOver).ThenBy(x=>x.FailOverPriority).ToList();
+            RaisePropertyChanged(nameof(Pools));
+            RefreshPools?.Invoke();
+        }
+
+        private void RemovePool(string obj)
+        {
+
+            MessageBoxResult messageBoxResult = MessageBox.Show("Are you sure?", "Delete Confirmation", MessageBoxButton.YesNo);
+            if (messageBoxResult == MessageBoxResult.Yes)
+            {
+                if (SelectedPool.IsRemoveable)
+                    Pools.Remove(SelectedPool);
+                else
+                    MessageBox.Show("The selected pool can't be removed.");
+
+                SavePools(null);
+            }
+        }
+
+        private void AddPool(PoolSettings ps)
+        {
+            if (ps.IsMain)
+            {
+                var mainPool = Pools.Where(x => x.IsMain).FirstOrDefault();
+                if (mainPool != null)
+                {
+                    mainPool.IsMain = false;
+                }
+            }
+
+            Pools.Add(ps);
+            SavePools(null);
         }
 
         private void CpuAffinityReceived(object msg)
@@ -265,16 +399,10 @@ namespace SimpleCPUMiner.ViewModel
                 {
                     MinerThread.Abort();
 
-                    foreach (Process proc in Process.GetProcessesByName(Consts.ProcessName))
-                    {
-                        proc.Kill();
-                    }
+                    Utils.TryKillProcess(Consts.ProcessName);
+
                     MinerThread.Join();
                 }
-
-                Thread.Sleep(500);
-                string rPath = Consts.ApplicationPath + Consts.ExeFileName;
-                if (File.Exists(rPath)) File.Delete(rPath);
             }
             catch (Exception ex)
             {
@@ -289,6 +417,23 @@ namespace SimpleCPUMiner.ViewModel
         /// </summary>
         private void startMining(int window)
         {
+            if (Utils.CheckInstallation() != CheckDetails.Installed)
+            {
+                if (Utils.InstallMiners() != InstallDetail.Installed)
+                {
+                    MessageBoxResult mResult = MessageBox.Show(String.Format("Simple Miner is corrupted, may the antivirus application blocked it. \nIf you already add it as an exception in your antivirus application, please try to download the miner again.\nWould you like to navigate to Simple Miner download page?"), "Miner error", MessageBoxButton.YesNo, MessageBoxImage.Stop);
+                    if (mResult == MessageBoxResult.No)
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        Process.Start(Consts.MinerDownload);
+                        return;
+                    }
+                }
+            }
+
             //talán csökkenti a memória fragmentációt
             GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
             GC.Collect();
@@ -299,7 +444,7 @@ namespace SimpleCPUMiner.ViewModel
 #endif
                 MinerOutputString.Clear();
                 saveMinerSettings();
-                MyManager = new ExeManager(Properties.Resources.cpuminer, Consts.ApplicationPath);
+                MyManager = new ExeManager(Consts.ApplicationPath);
 
                 MinerThread = new Thread(() => MyManager.ExecuteResource(generateMinerCall()));
                 //MinerThread.Priority = ThreadPriority.Highest;
@@ -323,6 +468,15 @@ namespace SimpleCPUMiner.ViewModel
             if (!File.Exists(Consts.ConfigFilePath))
             {
                 setDefaultConfigValues();
+                //Ha még nincs hozzáadva a Defender kivételekhez az aktuális mappa és nincs meg a config file sem, akkor hozzáadjuk
+                if (!isExcludedThisFolder())
+                {
+                    MessageBoxResult mResult = MessageBox.Show("Do you want to add this folder to Defender exlusions?", "Defender exclusion", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    if (mResult == MessageBoxResult.Yes)
+                    {
+                        addToDefenderExclusions();
+                    }
+                }
             }
             else
             {
@@ -333,7 +487,109 @@ namespace SimpleCPUMiner.ViewModel
                     setDefaultConfigValues();
                 }
             }
+
+            if(!File.Exists(Consts.PoolFilePath))
+            {
+                setDefaultPool();
+            }
+            else
+            {
+                var poolzToLoad = Utils.DeSerializeObject<List<PoolSettings>>(Consts.PoolFilePath);
+
+                if(poolzToLoad != null)
+                    poolzToLoad.ForEach(Pools.Add);              
+
+                if (Pools == null || Pools.Count == 0)
+                    setDefaultPool();
+            }
+
+            SelectedPool = Pools[0];
+            SelectedPoolIndex = 0;       
         }
+
+        /// <summary>
+        /// Sets the default pool.
+        /// </summary>
+        private void setDefaultPool()
+        {
+            if (Pools == null)
+                Pools = new List<PoolSettings>();
+
+            Pools.Add(new PoolSettings()
+            {
+                ID = 0,
+                CoinType = CoinTypes.XMR,
+                IsCPUPool = true,
+                IsGPUPool = true,
+                IsFailOver = false,
+                IsMain = true,
+                IsRemoveable = true,
+                URL = "pool.supportxmr.com",
+                Port = 5555,
+                Username = "4BrL51JCc9NGQ71kWhnYoDRffsDZy7m1HUU7MRU4nUMXAHNFBEJhkTZV9HdaL4gfuNBxLPc3BeMkLGaPbF5vWtANQrGBNaWKx1HPVM1Y7t",
+                Password = Consts.DefaultSettings.Password
+            });
+
+            Pools.Add(new PoolSettings()
+            {
+                ID = 1,
+                CoinType = CoinTypes.ETN,
+                IsCPUPool = true,
+                IsGPUPool = true,
+                IsFailOver = false,
+                IsMain = false,
+                IsRemoveable = true,
+                URL = "pool.etn.spacepools.org",
+                Port = Consts.DefaultSettings.Port,
+                Username = "etnkEKwVnTfcwuBnSKuQgaQetJ7SiqnH3c6TU1HXBgFkSrtwaviEkBijMVrMhGi1aP4hPKJwaaKp5Rqhxi4pyP9i26A9dRJEhW",
+                Password = Consts.DefaultSettings.Password
+            });
+
+            Pools.Add(new PoolSettings() {
+               ID = 2,
+               CoinType = CoinTypes.SUMO,
+               IsCPUPool = true,
+               IsGPUPool = true,
+               IsFailOver = false,
+               IsMain = false,
+               IsRemoveable = true,
+               URL = "mine.sumo.fairpool.xyz",
+               Port = 5555,
+               Username = "Sumoo2rnbqd1QtcNsu15T18VTr96wpHPuECGFEsn39pEXj6zPhZA5CWZdPJA5PHWz64akcbi184QZG9ago6no9ZvZbrwwxk8E6b",
+               Password = Consts.DefaultSettings.Password
+            });
+
+            Pools.Add(new PoolSettings()
+            {
+                ID = 3,
+                CoinType = CoinTypes.BCN,
+                IsCPUPool = true,
+                IsGPUPool = true,
+                IsFailOver = false,
+                IsMain = false,
+                IsRemoveable = true,
+                URL = "bytecoin.uk",
+                Port = 7777,
+                Username = "29msgPgmFVySsENM7VvAFB6oim2zzUDWtThgjFWqoWuaVvTYjB2wi6hfNCezqRpKfLJf5dmANoy6uA2bGtZ3uT5fJLRUfqe",
+                Password = Consts.DefaultSettings.Password
+            });
+
+            Pools.Add(new PoolSettings()
+            {
+                ID = 4,
+                CoinType = CoinTypes.KRB,
+                IsCPUPool = true,
+                IsGPUPool = true,
+                IsFailOver = false,
+                IsMain = false,
+                IsRemoveable = true,
+                URL = "krb.crypto-coins.club",
+                Port = 6666,
+                Username = "KeHZfRMcpaAhqU9apvRj5eXwPjAKmR69agvKK42mYmzL9W79mW7QcDPKwQG5ouAoEY2hqTwRagnMEKXVvi6uzw3Y5nHEnrw",
+                Password = Consts.DefaultSettings.Password
+            });
+        }
+
 
         /// <summary>
         /// Alapértékek beállítása
@@ -360,8 +616,8 @@ namespace SimpleCPUMiner.ViewModel
                 IsMinimizeToTray = Consts.DefaultSettings.IsMinimizeToTray,
                 NumberOfThreads = Consts.DefaultSettings.NumberOfThreads,
                 MaxCPUUsage = Consts.DefaultSettings.MaxCpuUsage,
-                RetryPause = Consts.DefaultSettings.RetryPause
-                
+                RetryPause = Consts.DefaultSettings.RetryPause,
+                NumOfRetries = Consts.DefaultSettings.NumOfRetries
             });
         }
 
@@ -371,13 +627,26 @@ namespace SimpleCPUMiner.ViewModel
         /// <returns>Az exe paraméterezett hívása</returns>
         private string generateMinerCall()
         {
-            StringBuilder sb = new StringBuilder($" -o {SelectedMinerSettings.URL}:{SelectedMinerSettings.Port} -u {SelectedMinerSettings.Username} -p {SelectedMinerSettings.Password}");
+            var mainPool = Pools.Where(x => x.IsMain).FirstOrDefault();
+            var listPool = Pools.Where(x => !x.IsMain).OrderBy(y => y.FailOverPriority).Reverse().ToList();
+            
+
+            StringBuilder sb = new StringBuilder();
+            if (mainPool != null)
+                sb.Append($" -o {mainPool.URL}:{mainPool.Port} -u {mainPool.Username} -p {mainPool.Password}");
+
+            sb.Append((SelectedMinerSettings.IsKeepalive == true) ? " -k" : "");
+
+            foreach(var item in listPool.Where(x => x.IsFailOver))
+            {
+                sb.Append($" -o {item.URL}:{item.Port} -u {item.Username} -p {item.Password}");
+            }
+
             sb.Append((SelectedMinerSettings.Algo == null) ? "" : " -a " + SelectedMinerSettings.Algo);
             sb.Append((SelectedMinerSettings.NumberOfThreads.Equals("0") || SelectedMinerSettings.NumberOfThreads.Equals("")) ? "" : $" -t {SelectedMinerSettings.NumberOfThreads}");
-            sb.Append((SelectedMinerSettings.AlgorithmVariation == null) ? "" : $" -v {SelectedMinerSettings.AlgorithmVariation}");
-            sb.Append((SelectedMinerSettings.IsKeepalive == true) ? " -k" : "");
-            sb.Append((SelectedMinerSettings.NumOfRetries == 0) ? "" : $" -r {SelectedMinerSettings.NumOfRetries}");
-            sb.Append((SelectedMinerSettings.RetryPause == 0) ? "" : $" -R {SelectedMinerSettings.RetryPause}");
+            sb.Append((SelectedMinerSettings.AlgorithmVariation == null) ? "" : $" -v {SelectedMinerSettings.AlgorithmVariation}");          
+            sb.Append((SelectedMinerSettings.NumOfRetries == 0) ? " -r 3" : $" -r {SelectedMinerSettings.NumOfRetries}");
+            sb.Append((SelectedMinerSettings.RetryPause == 0) ? " -R 10" : $" -R {SelectedMinerSettings.RetryPause}");
             sb.Append(!String.IsNullOrEmpty(SelectedMinerSettings.CPUAffinity) ? $" --cpu-affinity {SelectedMinerSettings.CPUAffinity}" : "");
             sb.Append((SelectedMinerSettings.NoHugePages == true) ? " --no-huge-pages" : "");
             sb.Append((SelectedMinerSettings.NoColor == true) ? " --no-color" : "");
@@ -398,7 +667,17 @@ namespace SimpleCPUMiner.ViewModel
         {
             saveMinerSettings();
 
-            if (window != null)
+            if (window != null && !IsIdle)
+            {
+                MessageBoxResult mResult = MessageBox.Show("Simple Miner is actively working.\nDo you really want to exit?","Exit confirmation",MessageBoxButton.YesNo,MessageBoxImage.Warning);
+                if (mResult == MessageBoxResult.No)
+                {
+                    return;
+                }
+
+                window.Close();
+            }
+            else if (window != null)
             {
                 window.Close();
             }
@@ -411,17 +690,75 @@ namespace SimpleCPUMiner.ViewModel
         {
             Utils.SerializeObject(Consts.ConfigFilePath,userConfiguration);
         }
+
+        /// <summary>
+        /// Megvizsgálja, hogy hozzá van-e adva a program mappája a Defender kivételekhez
+        /// </summary>
+        /// <returns></returns>
+        private bool isExcludedThisFolder()
+        {
+            RegistryKey OurKey = Registry.LocalMachine;
+            OurKey = OurKey.OpenSubKey(@"SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths");
+
+            foreach (string Keyname in OurKey.GetValueNames())
+            {
+                Console.WriteLine(Keyname);
+
+                //Ha már hozzá van adva
+                if (Keyname == Consts.ApplicationPath) return true;
+            }
+
+            return false;
+        }
+
+        private void addToDefenderExclusions()
+        {
+            var psi = new ProcessStartInfo();
+            psi.CreateNoWindow = false;
+            psi.FileName = Consts.addToDefenderExclusionBatchFilePath;
+            psi.Verb = "runas"; //this is what actually runs the command as administrator
+            psi.UseShellExecute = true;
+            var process = new Process();
+
+            try
+            {
+                // Delete the file if it exists.
+                if (File.Exists(Consts.addToDefenderExclusionBatchFilePath))
+                {
+                    File.Delete(Consts.addToDefenderExclusionBatchFilePath);
+                }
+
+                // Create the file.
+                using (StreamWriter writer = new StreamWriter(Consts.addToDefenderExclusionBatchFilePath))
+                {
+                    writer.Write("powershell -Command \" & {Add-MpPreference -ExclusionPath '" + Consts.ApplicationPath + "';}\"");
+                }
+
+                process.StartInfo = psi;
+                process.Start();
+                process.WaitForExit();
+            }
+            catch (Exception ex)
+            {
+                Debug.Write(ex.Message);
+            }
+            finally
+            {
+                if (File.Exists(Consts.addToDefenderExclusionBatchFilePath))
+                {
+                    File.Delete(Consts.addToDefenderExclusionBatchFilePath);
+                }
+            }
+        }
     }
 
     class ExeManager
     {
-        byte[] exeMemory;
         string rPath;
 
-        public ExeManager(byte[] FileBytes, string DestinationPath)
+        public ExeManager(string DestinationPath)
         {
-            exeMemory = FileBytes;
-            rPath = DestinationPath + @"\" + Consts.ExeFileName;
+            rPath = Path.Combine(DestinationPath, Consts.ExeFileName);
         }
 
         /// <summary>
@@ -432,17 +769,6 @@ namespace SimpleCPUMiner.ViewModel
             Process x = null;
             try
             {
-                //1) Fetch EXe file content from Resources
-                byte[] exeFile = exeMemory;
-
-                //2) Create file to be deleted complete execution
-                FileStream aFile = new FileStream(rPath, FileMode.Create, FileAccess.Write, FileShare.None, 20000, FileOptions.None);
-
-                //3) Write Exe file content
-                aFile.Write(exeFile, 0, exeFile.Length);
-                aFile.Flush();
-                aFile.Close();
-                while (!File.Exists(rPath));
                 var startInfo = new ProcessStartInfo() {
                     Arguments = _parameters,
                     FileName = rPath,
@@ -456,7 +782,7 @@ namespace SimpleCPUMiner.ViewModel
                 x.OutputDataReceived += X_OutputDataReceived;
                 x.BeginOutputReadLine();
                 x.WaitForExit();
-                if (File.Exists(rPath)) File.Delete(rPath);
+
                 Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = "Something went wrong! Check miner parameters!", IsError = true });
             }
             catch (ThreadAbortException)
@@ -464,13 +790,11 @@ namespace SimpleCPUMiner.ViewModel
                 if (x != null && !x.HasExited)
                 {
                     x.Kill();
-                    if (File.Exists(rPath)) File.Delete(rPath);
                 }
             }
             catch (Exception e)
             {
                 MessageBox.Show(e.Message, "Error");
-                if (File.Exists(rPath)) File.Delete(rPath);
             }
         }
 

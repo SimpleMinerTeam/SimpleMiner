@@ -1,0 +1,63 @@
+﻿<Window x:Class="SimpleCPUMiner.View.PoolForm"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SimpleCPUMiner.View"
+        xmlns:conv="clr-namespace:SimpleCPUMiner.Converters"
+        mc:Ignorable="d"
+        x:Name="PoolSettingWindow"
+        Title="Pool settings" Height="300" Width="300" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <conv:CoinType2ImageSource x:Key="CoinType2ImageSource" />
+    </Window.Resources>
+    <Grid Background="#FFE5E5E5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="2*"></RowDefinition>
+            <RowDefinition Height="2*"></RowDefinition>
+            <RowDefinition Height="4*"></RowDefinition>
+            <RowDefinition Height="2*"></RowDefinition>
+            <RowDefinition Height="2*"></RowDefinition>
+            <RowDefinition Height="2*"></RowDefinition>
+
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <Label x:Name="labelPoolAddress" Content="Pool address:" HorizontalAlignment="Left" VerticalAlignment="Center" />
+        <TextBox x:Name="tbURL" TabIndex="1" Height="23" TextWrapping="Wrap" Margin="80,3,5,0" Text="{Binding Pool.URL}" VerticalContentAlignment="Center" VerticalAlignment="Center" TextAlignment="Left"/>
+        <Label x:Name="labelPort" Content="Port:" Grid.Row="1"  HorizontalAlignment="Left" VerticalAlignment="Center" Width="35"/>
+        <TextBox x:Name="tbPort" TabIndex="2" Grid.Row="1" HorizontalAlignment="Left" Width="50" Height="23" MaxLength="5" Margin="35,3,5,0" VerticalContentAlignment="Center" TextWrapping="Wrap" Text="{Binding Pool.Port}" VerticalAlignment="Center" PreviewTextInput="PortPrevTextInput" TextAlignment="Center" />
+        <Label x:Name="labelWalletAddress" Grid.Row="2" Content="Wallet address:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="95"/>
+        <TextBox x:Name="tbWalletAddress" Grid.Row="2" Margin="5,22,5,0" Grid.ColumnSpan="2" TabIndex="5" HorizontalAlignment="Stretch" Height="50" TextWrapping="Wrap" Text="{Binding Pool.Username}" VerticalAlignment="Top" FontSize="11" TextAlignment="Left"/>
+        <Label x:Name="labelPassword" Grid.Row="3" Content="Password:" HorizontalAlignment="Left" Margin="0" VerticalAlignment="Center" Width="61"/>
+        <TextBox x:Name="tbPassword" Grid.Row="3" TabIndex="6" HorizontalAlignment="Stretch" Height="23" Margin="65,0,5,0" VerticalContentAlignment="Center" TextWrapping="Wrap" Text="{Binding Pool.Password}" VerticalAlignment="Center" TextAlignment="Left"/>
+        <Label x:Name="labelOrder" Grid.Row="4" Content="Failover order:" HorizontalAlignment="Left" Margin="160,3,0,0" VerticalAlignment="Center" />
+        <TextBox x:Name="tbOrder" Grid.Row="4" TabIndex="8" HorizontalAlignment="Stretch" Height="23" Margin="245,5,5,0" VerticalContentAlignment="Center" TextWrapping="Wrap" IsEnabled="{Binding Pool.IsFailOver}" Text="{Binding Pool.FailOverPriority}" VerticalAlignment="Center" TextAlignment="Left"/>
+        <Label x:Name="labelCoin" Grid.Row="4"  Content="Icon:" HorizontalAlignment="Left" Margin="0,3,0,0" VerticalAlignment="Center" Width="61"/>
+        <ComboBox x:Name="cobCoin" Grid.Row="4" TabIndex="7" Width="90" Margin="40,5,5,0" HorizontalAlignment="Left" SelectedValue="{Binding SelectedCoin}" VerticalAlignment="Center" ItemsSource="{Binding CoinList}" >
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <Image Width="16px" Height="16px" Source="{Binding Type, Converter={StaticResource CoinType2ImageSource}}" Stretch="Fill" />
+                        <Label Content="{Binding Name}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
+        <CheckBox x:Name="cbMain" TabIndex="3" IsChecked="{Binding Pool.IsMain}" Content="Main pool" HorizontalAlignment="Left" Margin="100,0,0,0" Grid.Row="1" VerticalAlignment="Center" Checked="CheckBox_Checked" />
+        <CheckBox x:Name="cbFailOver" TabIndex="4" IsChecked="{Binding Pool.IsFailOver}" Content="Failover pool" HorizontalAlignment="Left" Margin="190,0,0,0" VerticalAlignment="Center" Grid.Row="1" Checked="cbFailOver_Checked" />
+        <Button Command="{Binding SaveCommand}" CommandParameter="{Binding ElementName=PoolSettingWindow}" TabIndex="9" HorizontalAlignment="Left" Grid.Row="5" Margin="5,0,0,0" VerticalAlignment="Center" Width="75">
+            <StackPanel Orientation="Horizontal">
+                <Image Source="/SimpleMiner;component/Resources/iconModify.png" Stretch="Fill" Margin="5,3,0,3" Width="16px" Height="16px" />
+                <Label Content="Save" />
+            </StackPanel>
+        </Button>
+        <Button Command="{Binding CancelCommand}" CommandParameter="{Binding ElementName=PoolSettingWindow}" TabIndex="10" HorizontalAlignment="Right"  Grid.Row="5" Margin="0,0,5,0" VerticalAlignment="Center" Width="75">
+            <StackPanel Orientation="Horizontal">
+                <Image Source="/SimpleMiner;component/Resources/iconCancel.png" Stretch="Fill" Margin="5,3,0,3" Width="16" Height="16" />
+                <Label Content="Cancel" />
+            </StackPanel>
+        </Button>
+    </Grid>
+</Window>

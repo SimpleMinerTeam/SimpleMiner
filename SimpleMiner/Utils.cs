@@ -1,11 +1,18 @@
 ﻿using Microsoft.Win32;
 using System;
+using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Security.Cryptography;
 using System.Windows;
 
 namespace SimpleCPUMiner
 {
+    public enum CheckDetails { NotInstalled, CorruptedMiner, Installed }
+
+    public enum InstallDetail { CannotInstall, MissingPackage, PackageCorrupted, Installed }
+
     public static class Utils
     {
         public static void SerializeObject<T>(string filename, T obj)
@@ -73,6 +80,125 @@ namespace SimpleCPUMiner
             else
                 // The value exists, the application is set to run at startup
                 return true;
+        }
+
+        public static String GenerateHashForFile(String filepath)
+        {
+            SHA256Managed algorithm = new SHA256Managed();
+            using (FileStream fileStream = new FileStream(filepath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                var hash = algorithm.ComputeHash(fileStream);
+                return BitConverter.ToString(hash);
+            }
+        }
+
+        public static bool StrictStringCompare(String value1, String value2)
+        {
+            return value1.Equals(value2, StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        public static void ExtractToDirectory(String zipFilepath, string destinationDirectoryName)
+        {
+            if (String.IsNullOrWhiteSpace(zipFilepath))
+            {
+                throw new ArgumentNullException("zipFilepath");
+            }
+
+            if (String.IsNullOrWhiteSpace(destinationDirectoryName))
+            {
+                throw new ArgumentNullException("destinationDirectoryName");
+            }
+
+            if (!Directory.Exists(destinationDirectoryName))
+            {
+                Directory.CreateDirectory(destinationDirectoryName);
+            }
+
+            using (FileStream archiveFileStream = new FileStream(zipFilepath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                ZipArchive archive = new ZipArchive(archiveFileStream);
+
+                foreach (ZipArchiveEntry file in archive.Entries)
+                {
+                    string completeFileName = Path.Combine(destinationDirectoryName, file.FullName);
+                    string directory = Path.GetDirectoryName(completeFileName);
+
+                    if (!Directory.Exists(directory))
+                    {
+                        Directory.CreateDirectory(directory);
+                    }
+
+                    if (file.Name != "")
+                    {
+                        file.ExtractToFile(completeFileName, true);
+                    }
+                }
+            }
+        }
+
+        public static CheckDetails CheckInstallation()
+        {
+            var applicationDirectory = Consts.ApplicationPath;
+            var miner = Path.Combine(applicationDirectory, Consts.ExeFileName);
+
+            if (File.Exists(miner))
+            {
+                if (StrictStringCompare(Consts.ExeFileHash, GenerateHashForFile(miner)))
+                {
+                    return CheckDetails.Installed;
+                }
+
+                return CheckDetails.CorruptedMiner;
+            }
+
+            return CheckDetails.NotInstalled;
+        }
+
+        public static void TryKillProcess(String processName)
+        {
+            foreach (Process proc in Process.GetProcessesByName(processName))
+            {
+                try
+                {
+                    proc.Kill();
+                }
+                catch(Exception exception)
+                {
+                    Debug.WriteLine(exception.Message);
+                }
+            }
+        }
+
+        public static InstallDetail InstallMiners()
+        {
+            try
+            {
+                Utils.TryKillProcess(Consts.ProcessName);
+
+                if (File.Exists(Consts.PackFileName))
+                {
+                    try
+                    {
+                        ExtractToDirectory(Consts.PackFileName, Consts.ApplicationPath);
+                        return (CheckInstallation() == CheckDetails.Installed ? InstallDetail.Installed : InstallDetail.CannotInstall);
+                    }
+                    catch
+                    {
+                        return InstallDetail.CannotInstall;
+                    }
+                }
+
+                return InstallDetail.MissingPackage;
+            }
+            catch (Exception exception)
+            {
+                Debug.WriteLine(exception.Message);
+#if DEBUG
+                throw;
+#else
+                return InstallDetail.CannotInstall;
+#endif
+            }
         }
     }
 }

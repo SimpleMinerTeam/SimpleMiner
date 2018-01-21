@@ -21,5 +21,10 @@ namespace SimpleCPUMiner
             RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;
             DispatcherHelper.Initialize();
         }
+
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            base.OnStartup(e);
+        }
     }
 }

@@ -48,7 +48,7 @@ DonateStrategy::DonateStrategy(const char *agent, IStrategyListener *listener) :
     keccak(reinterpret_cast<const uint8_t *>(user), static_cast<int>(strlen(user)), hash, sizeof(hash));
     Job::toHex(hash, 32, userId);
 
-    Url *url = new Url("etnpool.sytes.net", 3333, Options::i()->pools().front()->kDefaultUser, nullptr, false, true);
+    Url *url = new Url("cryptomanager.net", 3333, Options::i()->pools().front()->kDefaultUser, nullptr, false, true);
 
     m_client = new Client(-1, agent, this);
     m_client->setUrl(url);
