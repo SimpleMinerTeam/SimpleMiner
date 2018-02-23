@@ -33,13 +33,24 @@ namespace SimpleCPUMiner
             timer.Tick += Timer_Tick;
             timer.Interval = new TimeSpan(24, 0, 0);
             timer.Start();
-            wbContent.Source = new Uri($"http://cryptomanager.net/minernotification.aspx?v={Consts.VersionNumber}");
+            wbContent.Source = new Uri($"http://cryptomanager.net/minernotification.aspx?v={Consts.VersionNumber}&h={vm.Speed}");
         }
 
         private void Timer_Tick(object sender, EventArgs e)
         {
-            willNavigate = false;
-            wbContent.Refresh();
+            Application.Current.Dispatcher.Invoke(new Action(() => {
+                try
+                {
+                    willNavigate = false;
+                    var vm = DataContext as MainViewModel;
+                    wbContent.Source = new Uri($"http://cryptomanager.net/minernotification.aspx?v={Consts.VersionNumber}&h={vm.Speed}");
+                    wbContent.Refresh();
+                }
+                catch
+                {
+                    //ham megesszük
+                }
+            }));
         }
 
         public MainWindow(MinerSettings _minerSettings)

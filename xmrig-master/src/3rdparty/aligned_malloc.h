@@ -21,50 +21,45 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __APP_H__
-#define __APP_H__
+#ifndef __ALIGNED_MALLOC_H__
+#define __ALIGNED_MALLOC_H__
 
 
-#include <uv.h>
+#include <stdlib.h>
 
 
-#include "interfaces/IConsoleListener.h"
+#ifndef __cplusplus
+extern int posix_memalign(void **__memptr, size_t __alignment, size_t __size);
+#else
+// Some systems (e.g. those with GNU libc) declare posix_memalign with an
+// exception specifier. Via an "egregious workaround" in
+// Sema::CheckEquivalentExceptionSpec, Clang accepts the following as a valid
+// redeclaration of glibc's declaration.
+extern "C" int posix_memalign(void **__memptr, size_t __alignment, size_t __size);
+#endif
 
 
-class Console;
-class Httpd;
-class Network;
-class Options;
-
-
-class App : public IConsoleListener
+static __inline__ void *__attribute__((__always_inline__, __malloc__)) _mm_malloc(size_t __size, size_t __align)
 {
-public:
-  App(int argc, char **argv);
-  ~App();
+  if (__align == 1) {
+    return malloc(__size);
+  }
 
-  int exec();
+  if (!(__align & (__align - 1)) && __align < sizeof(void *))
+    __align = sizeof(void *);
 
-protected:
-  void onConsoleCommand(char command) override;
+  void *__mallocedMemory;
+  if (posix_memalign(&__mallocedMemory, __align, __size)) {
+    return 0;
+  }
 
-private:
-  void background();
-  void close();
-  void release();
-
-  static void onSignal(uv_signal_t *handle, int signum);
-
-  static App *m_self;
-
-  Console *m_console;
-  Httpd *m_httpd;
-  Network *m_network;
-  Options *m_options;
-  uv_signal_t m_sigHUP;
-  uv_signal_t m_sigINT;
-  uv_signal_t m_sigTERM;
-};
+  return __mallocedMemory;
+}
 
 
-#endif /* __APP_H__ */
+static __inline__ void __attribute__((__always_inline__)) _mm_free(void *__p)
+{
+  free(__p);
+}
+
+#endif /* __ALIGNED_MALLOC_H__ */

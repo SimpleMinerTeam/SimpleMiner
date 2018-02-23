@@ -31,6 +31,9 @@ namespace SimpleCPUMiner.Converters
                 case CoinTypes.KRB:
                     return "/SimpleMiner;component/Resources/coinKrb.png";
                     break;
+                case CoinTypes.TRTL:
+                    return "/SimpleMiner;component/Resources/coinTurtle.png";
+                    break;
                 default:
                     return "/SimpleMiner;component/Resources/coinOther.png";
                     break;

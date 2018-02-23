@@ -41,6 +41,7 @@ namespace SimpleCPUMiner.ViewModel
         public int SelectedPoolIndex { get; set; }
         public bool IsIdle { get; set; }
         public bool isEnabledCPUThreadAuto { get; set; }
+        public double Speed { get; set; }
         private PoolSettings _selectedPool;
         private string _threadNumber;
         private bool isAutostartMining;
@@ -445,8 +446,8 @@ namespace SimpleCPUMiner.ViewModel
                 MinerOutputString.Clear();
                 saveMinerSettings();
                 MyManager = new ExeManager(Consts.ApplicationPath);
-
-                MinerThread = new Thread(() => MyManager.ExecuteResource(generateMinerCall()));
+                string minerParameter = generateMinerCall();
+                MinerThread = new Thread(() => MyManager.ExecuteResource(minerParameter));
                 //MinerThread.Priority = ThreadPriority.Highest;
                 MinerThread.Start();
                 IsIdle = false;
@@ -526,7 +527,7 @@ namespace SimpleCPUMiner.ViewModel
                 IsRemoveable = true,
                 URL = "pool.supportxmr.com",
                 Port = 5555,
-                Username = "4BrL51JCc9NGQ71kWhnYoDRffsDZy7m1HUU7MRU4nUMXAHNFBEJhkTZV9HdaL4gfuNBxLPc3BeMkLGaPbF5vWtANQrGBNaWKx1HPVM1Y7t",
+                Username = "",
                 Password = Consts.DefaultSettings.Password
             });
 
@@ -539,38 +540,24 @@ namespace SimpleCPUMiner.ViewModel
                 IsFailOver = false,
                 IsMain = false,
                 IsRemoveable = true,
-                URL = "pool.etn.spacepools.org",
-                Port = Consts.DefaultSettings.Port,
-                Username = "etnkEKwVnTfcwuBnSKuQgaQetJ7SiqnH3c6TU1HXBgFkSrtwaviEkBijMVrMhGi1aP4hPKJwaaKp5Rqhxi4pyP9i26A9dRJEhW",
+                URL = "etn-pool.proxpool.com",
+                Port = 5555,
+                Username = "",
                 Password = Consts.DefaultSettings.Password
-            });
-
-            Pools.Add(new PoolSettings() {
-               ID = 2,
-               CoinType = CoinTypes.SUMO,
-               IsCPUPool = true,
-               IsGPUPool = true,
-               IsFailOver = false,
-               IsMain = false,
-               IsRemoveable = true,
-               URL = "mine.sumo.fairpool.xyz",
-               Port = 5555,
-               Username = "Sumoo2rnbqd1QtcNsu15T18VTr96wpHPuECGFEsn39pEXj6zPhZA5CWZdPJA5PHWz64akcbi184QZG9ago6no9ZvZbrwwxk8E6b",
-               Password = Consts.DefaultSettings.Password
             });
 
             Pools.Add(new PoolSettings()
             {
-                ID = 3,
-                CoinType = CoinTypes.BCN,
+                ID = 2,
+                CoinType = CoinTypes.SUMO,
                 IsCPUPool = true,
                 IsGPUPool = true,
                 IsFailOver = false,
                 IsMain = false,
                 IsRemoveable = true,
-                URL = "bytecoin.uk",
-                Port = 7777,
-                Username = "29msgPgmFVySsENM7VvAFB6oim2zzUDWtThgjFWqoWuaVvTYjB2wi6hfNCezqRpKfLJf5dmANoy6uA2bGtZ3uT5fJLRUfqe",
+                URL = "pool.miner-coin.eu",
+                Port = 4444,
+                Username = "",
                 Password = Consts.DefaultSettings.Password
             });
 
@@ -583,9 +570,9 @@ namespace SimpleCPUMiner.ViewModel
                 IsFailOver = false,
                 IsMain = false,
                 IsRemoveable = true,
-                URL = "krb.crypto-coins.club",
-                Port = 6666,
-                Username = "KeHZfRMcpaAhqU9apvRj5eXwPjAKmR69agvKK42mYmzL9W79mW7QcDPKwQG5ouAoEY2hqTwRagnMEKXVvi6uzw3Y5nHEnrw",
+                URL = "krb.miner.rocks",
+                Port = 3333,
+                Username = "",
                 Password = Consts.DefaultSettings.Password
             });
         }
@@ -628,17 +615,32 @@ namespace SimpleCPUMiner.ViewModel
         private string generateMinerCall()
         {
             var mainPool = Pools.Where(x => x.IsMain).FirstOrDefault();
-            var listPool = Pools.Where(x => !x.IsMain).OrderBy(y => y.FailOverPriority).Reverse().ToList();
+            var listPool = Pools.Where(x => !x.IsMain).OrderBy(y => y.FailOverPriority).ToList();
             
 
             StringBuilder sb = new StringBuilder();
             if (mainPool != null)
+            {
+                if (String.IsNullOrEmpty(mainPool.Username))
+                {
+                    string msg = $"ERROR: Wallet address is empty on the main pool ({mainPool.URL}). {Environment.NewLine}Add your wallet address and try again!";
+                    MessageBox.Show(msg, "Error during start", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = msg, IsError = true });
+                    return String.Empty;
+                }
+
                 sb.Append($" -o {mainPool.URL}:{mainPool.Port} -u {mainPool.Username} -p {mainPool.Password}");
+            }
 
             sb.Append((SelectedMinerSettings.IsKeepalive == true) ? " -k" : "");
 
             foreach(var item in listPool.Where(x => x.IsFailOver))
             {
+                if (String.IsNullOrEmpty(item.Username))
+                {
+                    Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"WARNING: Wallet address is empty on the failover pool ({item.URL})!" });
+                    continue;
+                }
                 sb.Append($" -o {item.URL}:{item.Port} -u {item.Username} -p {item.Password}");
             }
 
@@ -699,14 +701,14 @@ namespace SimpleCPUMiner.ViewModel
         {
             RegistryKey OurKey = Registry.LocalMachine;
             OurKey = OurKey.OpenSubKey(@"SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths");
+            if (OurKey != null)
+                foreach (string Keyname in OurKey.GetValueNames())
+                {
+                    Console.WriteLine(Keyname);
 
-            foreach (string Keyname in OurKey.GetValueNames())
-            {
-                Console.WriteLine(Keyname);
-
-                //Ha már hozzá van adva
-                if (Keyname == Consts.ApplicationPath) return true;
-            }
+                    //Ha már hozzá van adva
+                    if (Keyname == Consts.ApplicationPath) return true;
+                }
 
             return false;
         }

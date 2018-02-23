@@ -39,36 +39,39 @@ namespace SimpleCPUMiner.ViewModel
 
         public void CalcCpuAffinity()
         {
-            char[] bin = new char[99];
-            for (int x = 0; x < bin.Length; x++)
-                bin[x] = '0';
-
-            int corePerCpu = (int)CpuList[0].Cores;
-
-            if (!ThreadNumber.Equals("0"))
+            if (CpuList != null && CpuList.Count > 0)
             {
-                int threadCount = int.Parse(ThreadNumber);
+                char[] bin = new char[99];
+                for (int x = 0; x < bin.Length; x++)
+                    bin[x] = '0';
 
-                for (int i = 0; i < threadCount; i += 2)
-                    for (int k = 0; k < CpuList.Count; k++)
-                        bin[i + k * corePerCpu] = '1';
-            }
-            else
-            {
-                int threadCount = 0;
-                foreach (var cpu in CpuList)
+                int corePerCpu = (int)CpuList[0].Cores;
+
+                if (!ThreadNumber.Equals("0"))
                 {
-                    threadCount += (int)((cpu.L2Cache + cpu.L3Cache) / 2);
+                    int threadCount = int.Parse(ThreadNumber);
+
+                    for (int i = 0; i < threadCount; i += 2)
+                        for (int k = 0; k < CpuList.Count; k++)
+                            bin[i + k * corePerCpu] = '1';
                 }
+                else
+                {
+                    int threadCount = 0;
+                    foreach (var cpu in CpuList)
+                    {
+                        threadCount += (int)((cpu.L2Cache + cpu.L3Cache) / 2);
+                    }
 
-                for (int i = 0; i < threadCount; i += 2)
-                    for (int k = 0; k < CpuList.Count; k++)
-                        bin[i + k * corePerCpu] = '1';
+                    for (int i = 0; i < threadCount; i += 2)
+                        for (int k = 0; k < CpuList.Count; k++)
+                            bin[i + k * corePerCpu] = '1';
 
+                }
+                CpuAffinityCalc = $"0x{Convert.ToInt32(new string(bin.Reverse().ToArray()), 2).ToString("X")}{Convert.ToInt32(new string(bin.Reverse().ToArray()), 2).ToString("X")}";
+                CpuAffinityOut = $"Your CPU affinity value is: {CpuAffinityCalc}";
+                RaisePropertyChanged(nameof(CpuAffinityOut));
             }
-            CpuAffinityCalc = $"0x{Convert.ToInt32(new string(bin.Reverse().ToArray()), 2).ToString("X")}";
-            CpuAffinityOut = $"Your CPU affinity value is: {CpuAffinityCalc}";
-            RaisePropertyChanged(nameof(CpuAffinityOut));
         }
 
         private void CloseWindow(Window window)
@@ -97,36 +100,49 @@ namespace SimpleCPUMiner.ViewModel
 
         private void GetCpuInfo()
         {
-            var cpuList = new ManagementObjectSearcher("select * from Win32_Processor").Get().Cast<ManagementObject>();
-
-            foreach (var cpu in cpuList)
+            try
             {
-                var CPU = new CpuInfo();
-                CPU.ID = (string)cpu["ProcessorId"];
-                CPU.Socket = (string)cpu["SocketDesignation"];
-                CPU.Name = (string)cpu["Name"];
-                CPU.Description = (string)cpu["Caption"];
-                CPU.AddressWidth = (ushort)cpu["AddressWidth"];
-                CPU.DataWidth = (ushort)cpu["DataWidth"];
-                CPU.SpeedMHz = (uint)cpu["MaxClockSpeed"];
-                CPU.BusSpeedMHz = (uint)cpu["ExtClock"];
-                CPU.L2Cache = (uint)cpu["L2CacheSize"]/1024;
-                CPU.L3Cache = (uint)cpu["L3CacheSize"]/1024;
-                CPU.Cores = (uint)cpu["NumberOfCores"];
-                CPU.Threads = (uint)cpu["NumberOfLogicalProcessors"];
+                var cpuList = new ManagementObjectSearcher("select * from Win32_Processor").Get().Cast<ManagementObject>();
+                if (cpuList != null)
+                {
+                    foreach (var cpu in cpuList)
+                    {
+                        var CPU = new CpuInfo();
+                        CPU.ID = (string)cpu["ProcessorId"];
+                        CPU.Socket = (string)cpu["SocketDesignation"];
+                        CPU.Name = (string)cpu["Name"];
+                        CPU.Description = (string)cpu["Caption"];
+                        CPU.AddressWidth = (ushort)cpu["AddressWidth"];
+                        CPU.DataWidth = (ushort)cpu["DataWidth"];
+                        CPU.SpeedMHz = (uint)cpu["MaxClockSpeed"];
+                        CPU.BusSpeedMHz = (uint)cpu["ExtClock"];
+                        CPU.L2Cache = (uint)cpu["L2CacheSize"] / 1024;
+                        CPU.L3Cache = (uint)cpu["L3CacheSize"] / 1024;
+                        CPU.Cores = (uint)cpu["NumberOfCores"];
+                        CPU.Threads = (uint)cpu["NumberOfLogicalProcessors"];
 
-                CPU.Name =
-                    CPU.Name
-                    .Replace("(TM)", "™")
-                    .Replace("(tm)", "™")
-                    .Replace("(R)", "®")
-                    .Replace("(r)", "®")
-                    .Replace("(C)", "©")
-                    .Replace("(c)", "©")
-                    .Replace("    ", " ")
-                    .Replace("  ", " ");
+                        CPU.Name =
+                            CPU.Name
+                            .Replace("(TM)", "™")
+                            .Replace("(tm)", "™")
+                            .Replace("(R)", "®")
+                            .Replace("(r)", "®")
+                            .Replace("(C)", "©")
+                            .Replace("(c)", "©")
+                            .Replace("    ", " ")
+                            .Replace("  ", " ");
 
-                CpuList.Add(CPU);
+                        CpuList.Add(CPU);
+                    }
+                }
+                else
+                {
+                    Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = "Unable to detect installed CPU. (maybe VM in use)" });
+                }
+            }
+            catch
+            {
+                Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = "Unable to detect installed CPU. (maybe VM in use)" });
             }
         }
     }

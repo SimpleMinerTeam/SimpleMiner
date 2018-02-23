@@ -7,6 +7,21 @@
         mc:Ignorable="d"
         x:Name="CpuAffinityWindow"
         Title="Cpu Affinity" Height="250" Width="300" WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <Style x:Key="emptyList" TargetType="{x:Type ListView}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=Items.Count}" Value="0">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate>
+                                <TextBlock Text="Unable to detect your CPU." />
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="24"></RowDefinition>
@@ -15,7 +30,7 @@
             <RowDefinition></RowDefinition>
         </Grid.RowDefinitions>
         <Label Content="Installed CPUs:" />
-        <ListView Grid.Row="1" ItemsSource="{Binding CpuList}" Margin="5" >
+        <ListView Grid.Row="1" ItemsSource="{Binding CpuList}" Margin="5" Style="{StaticResource emptyList}">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <WrapPanel Width="235">

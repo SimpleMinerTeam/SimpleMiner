@@ -1,4 +1,5 @@
 ﻿using GalaSoft.MvvmLight.Threading;
+using ManagedCuda.Nvml;
 using System;
 using System.Collections.Generic;
 using System.Configuration;

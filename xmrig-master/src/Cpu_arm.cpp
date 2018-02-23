@@ -21,50 +21,34 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __APP_H__
-#define __APP_H__
+
+#include <string.h>
 
 
-#include <uv.h>
+#include "Cpu.h"
 
 
-#include "interfaces/IConsoleListener.h"
+char Cpu::m_brand[64]   = { 0 };
+int Cpu::m_flags        = 0;
+int Cpu::m_l2_cache     = 0;
+int Cpu::m_l3_cache     = 0;
+int Cpu::m_sockets      = 1;
+int Cpu::m_totalCores   = 0;
+int Cpu::m_totalThreads = 0;
 
 
-class Console;
-class Httpd;
-class Network;
-class Options;
-
-
-class App : public IConsoleListener
+int Cpu::optimalThreadsCount(int algo, bool doubleHash, int maxCpuUsage)
 {
-public:
-  App(int argc, char **argv);
-  ~App();
-
-  int exec();
-
-protected:
-  void onConsoleCommand(char command) override;
-
-private:
-  void background();
-  void close();
-  void release();
-
-  static void onSignal(uv_signal_t *handle, int signum);
-
-  static App *m_self;
-
-  Console *m_console;
-  Httpd *m_httpd;
-  Network *m_network;
-  Options *m_options;
-  uv_signal_t m_sigHUP;
-  uv_signal_t m_sigINT;
-  uv_signal_t m_sigTERM;
-};
+    return m_totalThreads;
+}
 
 
-#endif /* __APP_H__ */
+void Cpu::initCommon()
+{
+    memcpy(m_brand, "Unknown", 7);
+
+#   if defined(XMRIG_ARMv8)
+    m_flags |= X86_64;
+    m_flags |= AES;
+#   endif
+}

@@ -7,6 +7,17 @@ Our program based on XMRig miner.
 
 VERSION HISTORY
 ---------------
+v1.2.0.0 (2018/02/23)
+Improvements: 
+ - Updated to latest Xmrig version
+ 
+Bugfix:
+ - Failover pool sequence issue
+ - Unable to scrolling pool list
+ - Crashed when CPU affinity was modified on Windows Server 2016
+ - Occasional collapsing on Windows 7
+ - Windows Server 2012 compatibility problem
+ 
 v1.1.0.0 (2018/01/21)
  New features:
  - Pool managing
@@ -35,7 +46,7 @@ FEATURES
 
 * No need editing batch files or config files
 
-* Supporting all Cryptonight algorithms (Monero, Electroneum, Sumokoin, etc.)
+* Supporting all Cryptonight based coins (Monero, Electroneum, Sumokoin, etc.)
 
 * Launch on Windows startup option
 
@@ -54,7 +65,7 @@ OPTIONS
 -------
 [Pool address]: URL of mining server (e.g. etnpool.sytes.net). Only Stratum protocol is supported.
 
-[Port]: The port number of the pool (e.g. 7777)
+[Port]: The port number of the pool (e.g. 3333)
 
 [Wallet address]: Your wallet address
 

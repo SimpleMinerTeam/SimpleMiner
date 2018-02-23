@@ -36,6 +36,7 @@ namespace SimpleCPUMiner.ViewModel
                 new Coinz() { Name = "BCN", Type = CoinTypes.BCN },
                 new Coinz() { Name = "ETN", Type = CoinTypes.ETN },
                 new Coinz() { Name = "KRB", Type = CoinTypes.KRB },
+                new Coinz() { Name = "TRTL", Type = CoinTypes.TRTL },
                 new Coinz() { Name = "SUMO", Type = CoinTypes.SUMO },
                 new Coinz() { Name = "XMR", Type = CoinTypes.XMR }
             };
