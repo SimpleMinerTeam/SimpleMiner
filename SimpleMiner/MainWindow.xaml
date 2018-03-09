@@ -9,7 +9,8 @@
         xmlns:conv="clr-namespace:SimpleCPUMiner.Converters"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Height="500" Width="880" WindowStartupLocation="CenterScreen" ResizeMode="CanMinimize" Icon="Resources/miner_logo_blue.png" >
+        Loaded="MyMainWindow_Loaded"
+        Height="500" Width="880" WindowStartupLocation="CenterScreen"  Visibility="{Binding WindowVisibility}" WindowState="{Binding WindowState}" ShowInTaskbar="{Binding ShowInTaskbar}" ResizeMode="CanMinimize" Icon="Resources/miner_logo_blue.png" >
     <Window.Resources>
         <conv:Bool2VisibilityConverter x:Key="Bool2VisibilityConverter" />
         <conv:CoinType2ImageSource x:Key="CoinType2ImageSource" />
@@ -131,19 +132,19 @@
                             </ListView.ItemTemplate>
                         </ListView>
                         <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left">
-                            <Button Margin="5" Width="90" HorizontalContentAlignment="Left" Height="28px" IsEnabled="{Binding IsIdle}" Command="{Binding PoolAddCommand}" TabIndex="2" >
+                            <Button Margin="5" Width="90" HorizontalContentAlignment="Left" Height="28px" Command="{Binding PoolAddCommand}" TabIndex="2" >
                                 <StackPanel Orientation="Horizontal">
                                     <Image Source="Resources/iconAdd.png" Stretch="Fill" Margin="5,3,0,3" />
                                     <Label Content="Add new" TabIndex="2" />
                                 </StackPanel>
                             </Button>
-                            <Button Margin="5" Width="90" HorizontalContentAlignment="Left" Height="28px"  IsEnabled="{Binding IsIdle}" Command="{Binding PoolModifyCommand}" TabIndex="3">
+                            <Button Margin="5" Width="90" HorizontalContentAlignment="Left" Height="28px" Command="{Binding PoolModifyCommand}" TabIndex="3">
                                 <StackPanel Orientation="Horizontal">
                                     <Image Source="Resources/iconEdit.png" Stretch="Fill" Margin="5,3,0,3" />
                                     <Label Content="Modify" TabIndex="3" />
                                 </StackPanel>
                             </Button>
-                            <Button Margin="5" Width="90" HorizontalContentAlignment="Left" Height="28px" IsEnabled="{Binding IsIdle}" Command="{Binding PoolRemoveCommand}" TabIndex="4">
+                            <Button Margin="5" Width="90" HorizontalContentAlignment="Left" Height="28px" Command="{Binding PoolRemoveCommand}" TabIndex="4">
                                 <StackPanel Orientation="Horizontal" >
                                     <Image Source="Resources/iconRemove.png"  Stretch="Fill" Margin="5,3,0,3" />
                                     <Label Content="Remove" TabIndex="4" />

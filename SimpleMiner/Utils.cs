@@ -49,6 +49,52 @@ namespace SimpleCPUMiner
 
         }
 
+
+        /// <summary>
+        /// Végrehajt egy PowerShell parancsot.
+        /// </summary>
+        /// <param name="_psCommand">Végrehajtandó PowerShell parancs.</param>
+        public static void ExecutePSScript(string _psCommand)
+        {
+            var psi = new ProcessStartInfo();
+            psi.CreateNoWindow = false;
+            psi.FileName = Consts.PowerShellCommandFile;
+            psi.Verb = "runas"; //this is what actually runs the command as administrator
+            psi.UseShellExecute = true;
+            var process = new Process();
+
+            try
+            {
+                // Delete the file if it exists.
+                if (File.Exists(Consts.PowerShellCommandFile))
+                {
+                    File.Delete(Consts.PowerShellCommandFile);
+                }
+
+                // Create the file.
+                using (StreamWriter writer = new StreamWriter(Consts.PowerShellCommandFile))
+                {
+                    writer.Write("powershell -Command \" & {" + _psCommand + ";}\"");
+                }
+
+                process.StartInfo = psi;
+                process.Start();
+                process.WaitForExit();
+            }
+            catch (Exception ex)
+            {
+                Debug.Write(ex.Message);
+            }
+            finally
+            {
+                if (File.Exists(Consts.PowerShellCommandFile))
+                {
+                    File.Delete(Consts.PowerShellCommandFile);
+                }
+            }
+        }
+
+
         public static void AddProgramToStartup()
         {
             //RegistryKey rkApp = Registry.CurrentUser.OpenSubKey(Consts.StartupRegistryKey, true);
@@ -56,7 +102,7 @@ namespace SimpleCPUMiner
 
             if (!IsStartupItem())
                 // Add the value in the registry so that the application runs at startup
-                rkApp.SetValue("SimpleMiner", Consts.ExecutablePath);
+                rkApp.SetValue(Consts.ApplicationName, Consts.ExecutablePath);
         }
 
         public static void RemoveProgramFromStartup()
@@ -71,14 +117,12 @@ namespace SimpleCPUMiner
 
         public static bool IsStartupItem()
         {
-            // The path to the key where Windows looks for startup applications
             RegistryKey rkApp = Registry.CurrentUser.OpenSubKey(Consts.StartupRegistryKey, true);
+            var regValue = rkApp.GetValue(Consts.ApplicationName);
 
-            if (rkApp.GetValue(Consts.ApplicationName) == null)
-                // The value doesn't exist, the application is not set to run at startup
+            if (regValue == null || !regValue.ToString().Equals($"{Consts.ExecutablePath}\\{Consts.ApplicationName}"))
                 return false;
             else
-                // The value exists, the application is set to run at startup
                 return true;
         }
 

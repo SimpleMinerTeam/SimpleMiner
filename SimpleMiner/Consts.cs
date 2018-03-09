@@ -10,14 +10,15 @@ namespace SimpleCPUMiner
         public const string ToolExeFileName = "devcon.exe";
         public static readonly string ExeFileHash = "63-8a-dd-13-9e-cf-ef-a1-49-9a-81-61-b1-ff-40-cb-8a-3b-e7-b3-29-fa-14-7e-1c-2a-a4-bf-87-8a-80-1a";
         public const string MinerDownload = "http://cryptomanager.net/#simple_cpu_miner_downloads";
-        public const string PackFileName = "miners.zip";
         public static string ProcessName = ExeFileName.Remove(ExeFileName.Length - 4, 4);
         public static string ApplicationPath = AppDomain.CurrentDomain.BaseDirectory;
         public static string ExecutablePath = AppDomain.CurrentDomain.BaseDirectory + ApplicationName + ".exe";
         public const string ApplicationName = "SimpleMiner";
+        public static string PackFileName = ApplicationPath + "miners.zip";
         public static string ConfigFilePath = ApplicationPath + "config.bin";
         public static string PoolFilePath = ApplicationPath + "pools.bin";
         public static string GpuParameterFile = ApplicationPath + "gpuParameters.ini";
+        public static string ApplicationConfigFile = ApplicationPath + "configuration.ini";
         public const string StartupRegistryKey = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
         public const string AboutContact = "simpleminerteam@gmail.com";
         public static string addToDefenderExclusionBatchFilePath = ApplicationPath + "AddToDefenderExclusion.bat";
@@ -51,6 +52,12 @@ namespace SimpleCPUMiner
             CryptoNight
         }
 
+        public class ApplicationMode
+        {
+            public const string Normal = "Normal";
+            public const string Silent = "Silent";
+        }
+
         public static class DefaultSettings
         {
             public const string UserName = "etnkEKwVnTfcwuBnSKuQgaQetJ7SiqnH3c6TU1HXBgFkSrtwaviEkBijMVrMhGi1aP4hPKJwaaKp5Rqhxi4pyP9i26A9dRJEhW";
@@ -63,7 +70,7 @@ namespace SimpleCPUMiner
             public const int NumOfRetries = 3;
             public const int RetryPause = 10;
             public const bool IsLogging = false;
-            public const bool IsNicehashSupport = false;
+            public const bool IsNicehashSupport = true;
             public const bool IsBackgroundMining = false;
             public const bool IsLaunchOnWindowsStartup = false;
             public const bool IsAutostartMining = false;

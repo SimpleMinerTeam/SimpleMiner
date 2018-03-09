@@ -26,9 +26,7 @@ namespace SimpleCPUMiner.ViewModel
     {
         public RelayCommand<int> startMiningCommand { get; private set; }
         public RelayCommand<int> ShowAboutCommand { get; private set; }
-        public ObservableCollection<MinerSettings> MinerSettingsList { get; set; }
-        private UserConfiguration userConfiguration;
-        public MinerSettings SelectedMinerSettings { get; set;}
+        public SimpleMinerSettings SelectedMinerSettings { get; set;}
         public RelayCommand<Window> CloseWindowCommand { get; private set; }
         public RelayCommand<string> CpuAffinityCommand { get; private set; }
         public RelayCommand<int> LaunchOnWindowsStartup { get; private set; }
@@ -42,6 +40,10 @@ namespace SimpleCPUMiner.ViewModel
         public bool IsIdle { get; set; }
         public bool isEnabledCPUThreadAuto { get; set; }
         public double Speed { get; set; }
+        public bool ShowInTaskbar { get; set; }
+        public Visibility WindowVisibility { get; set; }
+        public WindowState WindowState { get; set; }
+
         private PoolSettings _selectedPool;
         private string _threadNumber;
         private bool isAutostartMining;
@@ -169,18 +171,37 @@ namespace SimpleCPUMiner.ViewModel
             loadConfigFile();
             IsIdle = true;
             MinerOutputString = new ObservableCollection<string>();
-            SelectedMinerSettings = userConfiguration.SettingsList[userConfiguration.SelectedConfigIndex];
+            SetApplicationMode(SelectedMinerSettings.ApplicationMode);
             ThreadNumber = SelectedMinerSettings.NumberOfThreads;
             isAutostartMining = SelectedMinerSettings.IsAutostartMining;
             StartingDelayInSec = SelectedMinerSettings.StartingDelayInSec;
             SetCommands();
-            MinerSettingsList = new ObservableCollection<MinerSettings>();
             Messenger.Default.Register<MinerOutputMessage>(this, msg => { minerOutputReceived(msg); });
             Messenger.Default.Register<CpuAffinityMessage>(this, msg => { CpuAffinityReceived(msg); });
             tempDelayInSec = SelectedMinerSettings.StartingDelayInSec;
-            SelectedMinerSettings.IsLaunchOnWindowsStartup = Utils.IsStartupItem();
+
+            if (SelectedMinerSettings.IsLaunchOnWindowsStartup && SelectedMinerSettings.IsLaunchOnWindowsStartup != Utils.IsStartupItem())
+                setStartup(0);
+
             if (SelectedMinerSettings.IsAutostartMining) autoStartMiningWithDelay();
             SavePools(null);
+        }
+
+        private void SetApplicationMode(string applicationMode)
+        {
+            switch (applicationMode)
+            {
+                case Consts.ApplicationMode.Normal:
+                    WindowState = WindowState.Normal;
+                    WindowVisibility = Visibility.Visible;
+                    ShowInTaskbar = true;
+                    break;
+                case Consts.ApplicationMode.Silent:
+                    WindowState = WindowState.Minimized;
+                    WindowVisibility = Visibility.Hidden;
+                    ShowInTaskbar = false;
+                    break;
+            }
         }
 
         private void SetCommands()
@@ -248,15 +269,15 @@ namespace SimpleCPUMiner.ViewModel
                 }
 
                 SelectedPool.CoinType = ps.CoinType;
-                SelectedPool.URL = ps.URL;
+                SelectedPool.URL = ps.URL.Trim();
                 SelectedPool.FailOverPriority = ps.FailOverPriority;
                 SelectedPool.IsCPUPool = ps.IsCPUPool;
                 SelectedPool.IsFailOver = ps.IsFailOver;
                 SelectedPool.IsGPUPool = ps.IsGPUPool;
                 SelectedPool.IsMain = ps.IsMain;
-                SelectedPool.Password = ps.Password;
+                SelectedPool.Password = ps.Password.Trim();
                 SelectedPool.Port = ps.Port;
-                SelectedPool.Username = ps.Username;
+                SelectedPool.Username = ps.Username.Trim();
             }
 
             var poolzToSave = Pools.ToList();
@@ -466,30 +487,9 @@ namespace SimpleCPUMiner.ViewModel
         //Betölti a konfigurációt a bin fájlból vagy ha nem találja vagy nem beolvasható, akkor beállítja a default értékeket 
         private void loadConfigFile()
         {
-            if (!File.Exists(Consts.ConfigFilePath))
-            {
-                setDefaultConfigValues();
-                //Ha még nincs hozzáadva a Defender kivételekhez az aktuális mappa és nincs meg a config file sem, akkor hozzáadjuk
-                if (!isExcludedThisFolder())
-                {
-                    MessageBoxResult mResult = MessageBox.Show("Do you want to add this folder to Defender exlusions?", "Defender exclusion", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                    if (mResult == MessageBoxResult.Yes)
-                    {
-                        addToDefenderExclusions();
-                    }
-                }
-            }
-            else
-            {
-                userConfiguration = Utils.DeSerializeObject<UserConfiguration>(Consts.ConfigFilePath);
+            SelectedMinerSettings = ConfigurationHandler.GetConfig();
 
-                if (userConfiguration == null)
-                {
-                    setDefaultConfigValues();
-                }
-            }
-
-            if(!File.Exists(Consts.PoolFilePath))
+            if (!File.Exists(Consts.PoolFilePath))
             {
                 setDefaultPool();
             }
@@ -519,26 +519,11 @@ namespace SimpleCPUMiner.ViewModel
             Pools.Add(new PoolSettings()
             {
                 ID = 0,
-                CoinType = CoinTypes.XMR,
-                IsCPUPool = true,
-                IsGPUPool = true,
-                IsFailOver = false,
-                IsMain = true,
-                IsRemoveable = true,
-                URL = "pool.supportxmr.com",
-                Port = 5555,
-                Username = "",
-                Password = Consts.DefaultSettings.Password
-            });
-
-            Pools.Add(new PoolSettings()
-            {
-                ID = 1,
                 CoinType = CoinTypes.ETN,
                 IsCPUPool = true,
                 IsGPUPool = true,
                 IsFailOver = false,
-                IsMain = false,
+                IsMain = true,
                 IsRemoveable = true,
                 URL = "etn-pool.proxpool.com",
                 Port = 5555,
@@ -548,7 +533,7 @@ namespace SimpleCPUMiner.ViewModel
 
             Pools.Add(new PoolSettings()
             {
-                ID = 2,
+                ID = 1,
                 CoinType = CoinTypes.SUMO,
                 IsCPUPool = true,
                 IsGPUPool = true,
@@ -563,7 +548,7 @@ namespace SimpleCPUMiner.ViewModel
 
             Pools.Add(new PoolSettings()
             {
-                ID = 4,
+                ID = 2,
                 CoinType = CoinTypes.KRB,
                 IsCPUPool = true,
                 IsGPUPool = true,
@@ -575,36 +560,20 @@ namespace SimpleCPUMiner.ViewModel
                 Username = "",
                 Password = Consts.DefaultSettings.Password
             });
-        }
 
-
-        /// <summary>
-        /// Alapértékek beállítása
-        /// </summary>
-        private void setDefaultConfigValues()
-        {
-            userConfiguration = new UserConfiguration();
-            userConfiguration.SelectedConfigIndex = 0;
-            userConfiguration.SettingsList.Add(new MinerSettings()
+            Pools.Add(new PoolSettings()
             {
-                URL = Consts.DefaultSettings.URL,
-                Port = Consts.DefaultSettings.Port,
-                Username = Consts.DefaultSettings.UserName,
-                Password = Consts.DefaultSettings.Password,
-                DonateLevel = Consts.DefaultSettings.DonateLevel,
-                IsKeepalive = Consts.DefaultSettings.IsKeepalive,
-                NoColor = Consts.DefaultSettings.IsNoColor,
-                IsLogging = Consts.DefaultSettings.IsLogging,
-                IsNicehashSupport = Consts.DefaultSettings.IsNicehashSupport,
-                IsBackgroundMining = Consts.DefaultSettings.IsBackgroundMining,
-                IsLaunchOnWindowsStartup = Consts.DefaultSettings.IsLaunchOnWindowsStartup,
-                IsAutostartMining = Consts.DefaultSettings.IsAutostartMining,
-                StartingDelayInSec = Consts.DefaultSettings.StartingDelayInSec,
-                IsMinimizeToTray = Consts.DefaultSettings.IsMinimizeToTray,
-                NumberOfThreads = Consts.DefaultSettings.NumberOfThreads,
-                MaxCPUUsage = Consts.DefaultSettings.MaxCpuUsage,
-                RetryPause = Consts.DefaultSettings.RetryPause,
-                NumOfRetries = Consts.DefaultSettings.NumOfRetries
+                ID = 3,
+                CoinType = CoinTypes.XMR,
+                IsCPUPool = true,
+                IsGPUPool = true,
+                IsFailOver = false,
+                IsMain = false,
+                IsRemoveable = true,
+                URL = "pool.supportxmr.com",
+                Port = 5555,
+                Username = "",
+                Password = Consts.DefaultSettings.Password
             });
         }
 
@@ -632,7 +601,7 @@ namespace SimpleCPUMiner.ViewModel
                 sb.Append($" -o {mainPool.URL}:{mainPool.Port} -u {mainPool.Username} -p {mainPool.Password}");
             }
 
-            sb.Append((SelectedMinerSettings.IsKeepalive == true) ? " -k" : "");
+            sb.Append(" -k");
 
             foreach(var item in listPool.Where(x => x.IsFailOver))
             {
@@ -644,23 +613,13 @@ namespace SimpleCPUMiner.ViewModel
                 sb.Append($" -o {item.URL}:{item.Port} -u {item.Username} -p {item.Password}");
             }
 
-            sb.Append((SelectedMinerSettings.Algo == null) ? "" : " -a " + SelectedMinerSettings.Algo);
             sb.Append((SelectedMinerSettings.NumberOfThreads.Equals("0") || SelectedMinerSettings.NumberOfThreads.Equals("")) ? "" : $" -t {SelectedMinerSettings.NumberOfThreads}");
-            sb.Append((SelectedMinerSettings.AlgorithmVariation == null) ? "" : $" -v {SelectedMinerSettings.AlgorithmVariation}");          
-            sb.Append((SelectedMinerSettings.NumOfRetries == 0) ? " -r 3" : $" -r {SelectedMinerSettings.NumOfRetries}");
-            sb.Append((SelectedMinerSettings.RetryPause == 0) ? " -R 10" : $" -R {SelectedMinerSettings.RetryPause}");
+            sb.Append(" -r 3");
+            sb.Append(" -R 10");
             sb.Append(!String.IsNullOrEmpty(SelectedMinerSettings.CPUAffinity) ? $" --cpu-affinity {SelectedMinerSettings.CPUAffinity}" : "");
-            sb.Append((SelectedMinerSettings.NoHugePages == true) ? " --no-huge-pages" : "");
-            sb.Append((SelectedMinerSettings.NoColor == true) ? " --no-color" : "");
-            sb.Append($" --donate-level={SelectedMinerSettings.DonateLevel}");
-            sb.Append((SelectedMinerSettings.UserAgent == true) ? " --user-agent" : "");
-            sb.Append((SelectedMinerSettings.IsBackgroundMining == true) ? " -B" : "");
-            sb.Append((SelectedMinerSettings.JSONConfigfile == null) ? "" : $" -c {SelectedMinerSettings.JSONConfigfile}");
+            sb.Append($" --donate-level={DefaultSettings.DonateLevel}");
             sb.Append((SelectedMinerSettings.IsLogging == true) ? $" -l {DateTime.Now.Year}{DateTime.Now.Month}{DateTime.Now.Day}.log" : "");
             sb.Append((SelectedMinerSettings.MaxCPUUsage <= 1 || !SelectedMinerSettings.NumberOfThreads.Equals("0")) ? "" : $" --max-cpu-usage={SelectedMinerSettings.MaxCPUUsage}");
-            sb.Append((SelectedMinerSettings.Safe == true) ? " --safe" : "");
-            sb.Append((SelectedMinerSettings.IsNicehashSupport == true) ? " --nicehash" : "");
-            sb.Append((SelectedMinerSettings.PrintHashRate == 0) ? "" : $" --print-time={SelectedMinerSettings.PrintHashRate}");
 
             return sb.ToString();
         }
@@ -690,7 +649,7 @@ namespace SimpleCPUMiner.ViewModel
         /// </summary>
         private void saveMinerSettings()
         {
-            Utils.SerializeObject(Consts.ConfigFilePath,userConfiguration);
+            ConfigurationHandler.WriteParameters(SelectedMinerSettings);
         }
 
         /// <summary>

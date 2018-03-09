@@ -7,6 +7,14 @@ Our program based on XMRig miner.
 
 VERSION HISTORY
 ---------------
+v1.3.0.0 (2018/03/09)
+Improvements: 
+ - Silent mode support
+ 
+Bugfix:
+ - Remove unnecessary spaces from pool managing data. (Pool address, wallet address...etc)
+ - Fix for an autostart issue which prevent application to start properly.
+ 
 v1.2.0.0 (2018/02/23)
 Improvements: 
  - Updated to latest Xmrig version
