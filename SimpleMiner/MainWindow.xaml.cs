@@ -1,13 +1,11 @@
 ﻿using SimpleCPUMiner.ViewModel;
 using System;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Threading;
@@ -29,8 +27,11 @@ namespace SimpleCPUMiner
             var vm = new MainViewModel();
             Closing += vm.ApplicationClosing();
             vm.RefreshPools = RefreshPools;
+            //vm.RefreshOpts = RefreshOpts; 
+            vm.RefreshDevices = RefreshDevices;
             if (vm.SelectedMinerSettings.IsMinimizeToTray == true || vm.SelectedMinerSettings.ApplicationMode.Equals(Consts.ApplicationMode.Silent, StringComparison.InvariantCultureIgnoreCase)) this.WindowState = WindowState.Minimized;
             this.DataContext = vm;
+            tcMaintabs.SelectedIndex = 0;
             timer = new DispatcherTimer();
             timer.Tick += Timer_Tick;
             timer.Interval = new TimeSpan(24, 0, 0);
@@ -53,6 +54,7 @@ namespace SimpleCPUMiner
                     //ham megesszük
                 }
             }));
+
         }
 
         public MainWindow(MinerSettings _minerSettings)
@@ -74,6 +76,16 @@ namespace SimpleCPUMiner
         private void RefreshPools()
         {
             lvPools.Items.Refresh();
+        }
+
+        //private void RefreshOpts()
+        //{
+        //    tvOptlist.Items.Refresh();
+        //}
+
+        private void RefreshDevices()
+        {
+            lvDevices.Items.Refresh();
         }
 
         private void wbContent_Navigating(object sender, System.Windows.Navigation.NavigatingCancelEventArgs e)
@@ -198,6 +210,5 @@ namespace SimpleCPUMiner
         [DllImport("kernel32.dll", EntryPoint = "SetLastError")]
         public static extern void SetLastError(int dwErrorCode);
         #endregion
-
     }
 }

@@ -154,6 +154,7 @@ static void print_commands()
 void Summary::print()
 {
     //print_versions();
+    
     print_cpu();
 	print_memory();
     print_threads();

@@ -34,6 +34,9 @@ namespace SimpleCPUMiner.Converters
                 case CoinTypes.TRTL:
                     return "/SimpleMiner;component/Resources/coinTurtle.png";
                     break;
+                case CoinTypes.NiceHash:
+                    return "/SimpleMiner;component/Resources/coinNiceHash.png";
+                    break;
                 default:
                     return "/SimpleMiner;component/Resources/coinOther.png";
                     break;

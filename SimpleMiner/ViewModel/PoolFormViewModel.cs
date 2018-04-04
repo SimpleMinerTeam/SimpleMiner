@@ -13,11 +13,11 @@ namespace SimpleCPUMiner.ViewModel
 {
     public class PoolFormViewModel : ViewModelBase
     {
-        public PoolSettings Pool { get; set; }
+        public PoolSettingsXml Pool { get; set; }
         public RelayCommand<Window> CancelCommand { get; private set; }
         public RelayCommand<Window> SaveCommand { get; private set; }
-        public Action<PoolSettings> AddPool;
-        public Action<PoolSettings> UpdatePoolList;
+        public Action<PoolSettingsXml> AddPool;
+        public Action<PoolSettingsXml> UpdatePoolList;
         public List<Coinz> CoinList { get; set; }
         public Coinz SelectedCoin { get; set; }
 
@@ -38,7 +38,8 @@ namespace SimpleCPUMiner.ViewModel
                 new Coinz() { Name = "KRB", Type = CoinTypes.KRB },
                 new Coinz() { Name = "TRTL", Type = CoinTypes.TRTL },
                 new Coinz() { Name = "SUMO", Type = CoinTypes.SUMO },
-                new Coinz() { Name = "XMR", Type = CoinTypes.XMR }
+                new Coinz() { Name = "XMR", Type = CoinTypes.XMR },
+                new Coinz() { Name = "NiceHash", Type = CoinTypes.NiceHash }
             };
 
         }
@@ -46,7 +47,6 @@ namespace SimpleCPUMiner.ViewModel
         private void Save(Window obj)
         {
             Pool.CoinType = SelectedCoin.Type;
-
             StringBuilder error = new StringBuilder();
 
             if (String.IsNullOrEmpty(Pool.URL))

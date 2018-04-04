@@ -3,6 +3,8 @@ using SimpleCPUMiner.Model;
 using System.IO;
 using System.Windows;
 using System.Reflection;
+using GalaSoft.MvvmLight.Messaging;
+using SimpleCPUMiner.Messages;
 
 namespace SimpleCPUMiner
 {
@@ -26,9 +28,10 @@ namespace SimpleCPUMiner
                         StartingDelayInSec = oldSettings.SettingsList[0].StartingDelayInSec
                     };
                 }
-                else
+                else if(Consts.OSType == Consts.WindowsType._10_or_Server_2016 || Consts.OSType == Consts.WindowsType._8_1_or_Server_2012_R2)
                 {
                     MessageBoxResult mResult = MessageBox.Show("Do you want to add this folder to Defender exlusions?", "Defender exclusion", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
                     if (mResult == MessageBoxResult.Yes)
                     {
                         Utils.ExecutePSScript("Add-MpPreference -ExclusionPath '" + Consts.ApplicationPath + "'");
@@ -41,7 +44,7 @@ namespace SimpleCPUMiner
                 ReadParameters(result);
             }
              
-            if (result == null)
+            if (result == null || string.IsNullOrEmpty(result.ApplicationMode))
                 result = new SimpleMinerSettings() {
                     ApplicationMode = Consts.ApplicationMode.Normal,
                     IsCPUMiningEnabled = true,
@@ -62,20 +65,27 @@ namespace SimpleCPUMiner
 
             if (File.Exists(Consts.ApplicationConfigFile))
             {
-                using (StreamReader streamReader = File.OpenText(Consts.ApplicationConfigFile))
+                try
                 {
-                    string str;
-
-                    while ((str = streamReader.ReadLine()) != null)
+                    using (StreamReader streamReader = File.OpenText(Consts.ApplicationConfigFile))
                     {
-                        if (str.Contains("|"))
-                            break;
+                        string str;
 
-                        string[] strArray = str.Split('=');
-                        SetPropertyValue(strArray[0], strArray[1], setting);
+                        while ((str = streamReader.ReadLine()) != null)
+                        {
+                            if (str.Contains("|"))
+                                break;
+
+                            string[] strArray = str.Split('=');
+                            SetPropertyValue(strArray[0], strArray[1], setting);
+                        }
                     }
+                    return true;
                 }
-                return true;
+                catch
+                {
+                    Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = "Configuration.ini is corrupted, default values loaded." });
+                }
             }
 
             return false;
@@ -91,6 +101,8 @@ namespace SimpleCPUMiner
                 foreach (PropertyInfo property in setting.GetType().GetProperties())
                     text.WriteLine(property.Name + "=" + property.GetValue(setting, null));
             }
+            //megvárjuk, hogy kiíródjon a fájl
+            System.Threading.Thread.Sleep(300);
         }
 
         private static void SetPropertyValue(string name, string value, SimpleMinerSettings setting)

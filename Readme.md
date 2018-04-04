@@ -1,12 +1,19 @@
- Simple Miner for CPU mining
+ Simple Miner for both CPU & GPU mining
 =============================
 
-Simple Miner is a hight performance Cryptonight miner program for CPU mining. Our team is made it for simple using without editing config- or batch files.
-This miner is free-to-use, however current developer fee is 1.0%. It means the program mining 99 minutes for the user and 1 minute for developers.
+Simple Miner is a hight performance Cryptonight miner program for both CPU & GPU mining. Our team is made it for simple using without editing config- or batch files.
+This miner is free-to-use, however current developer fee is 1.0%.
 Our program based on XMRig miner.
 
 VERSION HISTORY
 ---------------
+v2.0.3.0 (2018/04/04)
+Improvements:
+- Monero ASIC resistance algorithm support
+- AMD & Nvidia GPU mining support
+- Updated to latest Xmrig version
+- Pool storage converted to XML format
+
 v1.3.0.0 (2018/03/09)
 Improvements: 
  - Silent mode support
@@ -39,7 +46,7 @@ v1.0.0.0 (2017/11/28)
 
 SYSTEM REQUIREMENTS
 -------------------
-Windows 7/8/8.1/10 x64 operation system
+Windows 7/8/8.1/10/Server 2012 R2/Server 2016 x64 operation system
 
 
 FEATURES
@@ -48,17 +55,21 @@ FEATURES
 
 * Easy to use
 
-* Reliable operation
-
 * No need installation
 
-* No need editing batch files or config files
+* AMD & Nvidia GPU mining support
+
+* No need manually editing batch files or config files
+
+* Pool management
+
+* Failover support
+
+* Silent mode support
+
+* Monero ASIC resistance algorithm support
 
 * Supporting all Cryptonight based coins (Monero, Electroneum, Sumokoin, etc.)
-
-* Launch on Windows startup option
-
-* Autostart mining option with custom delay
 
 * Help to generate optimal CPU affinity
 
@@ -67,6 +78,7 @@ FEATURES
 * Virus and malware free
 
 * Nicehash support
+
 
 
 OPTIONS

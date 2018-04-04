@@ -35,7 +35,7 @@
         <Label x:Name="labelOrder" Grid.Row="4" Content="Failover order:" HorizontalAlignment="Left" Margin="160,3,0,0" VerticalAlignment="Center" />
         <TextBox x:Name="tbOrder" Grid.Row="4" TabIndex="8" HorizontalAlignment="Stretch" Height="23" Margin="245,5,5,0" VerticalContentAlignment="Center" TextWrapping="Wrap" IsEnabled="{Binding Pool.IsFailOver}" Text="{Binding Pool.FailOverPriority}" VerticalAlignment="Center" TextAlignment="Left"/>
         <Label x:Name="labelCoin" Grid.Row="4"  Content="Icon:" HorizontalAlignment="Left" Margin="0,3,0,0" VerticalAlignment="Center" Width="61"/>
-        <ComboBox x:Name="cobCoin" Grid.Row="4" TabIndex="7" Width="90" Margin="40,5,5,0" HorizontalAlignment="Left" SelectedValue="{Binding SelectedCoin}" VerticalAlignment="Center" ItemsSource="{Binding CoinList}" >
+        <ComboBox x:Name="cobCoin" Grid.Row="4" TabIndex="7" Width="100" Margin="40,5,5,0" HorizontalAlignment="Left" SelectedValue="{Binding SelectedCoin}" VerticalAlignment="Center" ItemsSource="{Binding CoinList}" >
             <ComboBox.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal">
