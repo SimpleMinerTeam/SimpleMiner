@@ -280,7 +280,7 @@
 
                 </WrapPanel>
             </StackPanel>
-            <WebBrowser x:Name="wbContent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,5,5,0" Navigating="wbContent_Navigating" />
+            <WebBrowser x:Name="wbContent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="10,0,5,0" Navigating="wbContent_Navigating" />
             <TabControl x:Name="tcMaintabs" Grid.Column="1" Grid.RowSpan="2" SelectedItem ="{Binding MainTabControl}" SelectedIndex="{Binding MainTabControlId}" >
                 <TabItem Header="Pool" TabIndex="1">
                     <Grid Background="#FFE5E5E5" >

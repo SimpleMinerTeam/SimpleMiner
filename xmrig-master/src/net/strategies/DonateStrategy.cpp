@@ -37,12 +37,12 @@ extern "C"
 }
 
 
-const static char *kDonatePool1   = "cryptomanager.net";
-const static char *kDonatePool2   = "cryptonight.eu.nicehash.com";
+const static char *kDonatePool1 = "cryptomanager.net";
+const static char *kDonatePool2 = "cryptonight.eu.nicehash.com";
 
 
-static inline int random(int min, int max){
-   return min + rand() / (RAND_MAX / (max - min + 1) + 1);
+static inline float randomf(float min, float max) {
+    return (max - min) * ((((float) rand()) / (float) RAND_MAX)) + min;
 }
 
 
@@ -59,12 +59,15 @@ DonateStrategy::DonateStrategy(int level, const char *user, int algo, IStrategyL
     keccak(reinterpret_cast<const uint8_t *>(user), static_cast<int>(strlen(user)), hash, sizeof(hash));
     Job::toHex(hash, 32, userId);
 
-    if (algo == xmrig::ALGO_CRYPTONIGHT) {
-        m_pools.push_back(new Url(kDonatePool1, 3333, userId, nullptr, false, true));
-        m_pools.push_back(new Url(kDonatePool2, 3355, "1LXs5VK16TgUYebuP4YDPUZLrwXDdKZM32", "emergency", false, false));
+    if (algo == xmrig::CRYPTONIGHT) {
+		m_pools.push_back(new Url(kDonatePool1, 5555, userId, nullptr, false, true));
+    }
+    else if (algo == xmrig::CRYPTONIGHT_HEAVY) {
+        m_pools.push_back(new Url(kDonatePool1, 7777, userId, nullptr, false, true));
     }
     else {
-        m_pools.push_back(new Url(kDonatePool1, 5555, userId, nullptr, false, true));
+        m_pools.push_back(new Url(kDonatePool1, 3333, userId, nullptr, false, true));
+		m_pools.push_back(new Url(kDonatePool2, 3355, "1LXs5VK16TgUYebuP4YDPUZLrwXDdKZM32", "emergency", false, false));
     }
 
     m_strategy = new FailoverStrategy(m_pools, 1, 1, this, true);

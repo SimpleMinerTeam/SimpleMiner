@@ -7,6 +7,18 @@ Our program based on XMRig miner.
 
 VERSION HISTORY
 ---------------
+v2.0.4.0 (2018/04/11)
+Improvements:
+ - User interface branding
+ - More transparent logging
+ - Pool url check (to avoid invalid pool address)
+ - Updated the latest Xmrig version
+ - Graft coin support
+
+Bugfix:
+ - GPU mining crashed during autostart
+ - Fix for GPU mining issue when pool address provided as IP
+
 v2.0.3.0 (2018/04/04)
 Improvements:
 - Monero ASIC resistance algorithm support

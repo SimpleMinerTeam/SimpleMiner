@@ -12,21 +12,12 @@ namespace SimpleCPUMiner
 
             #region  Coinok feltöltése
 
-            Coins.Add(new Coin {
-                Algorithm = Algorithm.CryptoNight,
+            Coins.Add(new Coin
+            {
+                Algorithm = Algorithm.CryptoNightV7,
                 CoinType = CoinTypes.XMR,
                 Icon = "coinMonero.png",
                 Name = "Monero",
-                ShortName = "XMR",
-                Webpage = "https://monero.org"
-            });
-
-            Coins.Add(new Coin
-            {
-                Algorithm = Algorithm.CryptoNight,
-                CoinType = CoinTypes.XMR,
-                Icon = "coinMonero.png",
-                Name = "Monero v1 POW",
                 ShortName = "XMR",
                 Webpage = "https://monero.org"
             });
@@ -43,7 +34,7 @@ namespace SimpleCPUMiner
 
             Coins.Add(new Coin
             {
-                Algorithm = Algorithm.CryptoNight,
+                Algorithm = Algorithm.CryptoNightHeavy,
                 CoinType = CoinTypes.SUMO,
                 Icon = "coinSumokoin.png",
                 Name = "Sumokoin",
@@ -74,6 +65,16 @@ namespace SimpleCPUMiner
             Coins.Add(new Coin
             {
                 Algorithm = Algorithm.CryptoNight,
+                CoinType = CoinTypes.GRFT,
+                Icon = "coinGraft.png",
+                Name = "Graft",
+                ShortName = "GRFT",
+                Webpage = "https://www.graft.network"
+            });
+
+            Coins.Add(new Coin
+            {
+                Algorithm = Algorithm.CryptoNightLite,
                 CoinType = CoinTypes.TRTL,
                 Icon = "coinTurtle.png",
                 Name = "TurtleCoin",
@@ -108,7 +109,7 @@ namespace SimpleCPUMiner
         public static string VersionNumber = Assembly.GetAssembly(typeof(Consts)).GetName().Version.ToString();
         public const string ExeFileName = "cpuminer.exe";
         public const string ToolExeFileName = "devcon.exe";
-        public static readonly string ExeFileHash = "03-00-a9-00-29-e4-12-fc-4d-ca-8f-02-be-09-0d-1a-3e-33-dc-c4-a8-49-5b-38-32-90-0f-ee-e2-dd-5b-63";
+        public static readonly string ExeFileHash = "66-56-83-f3-63-6a-59-1e-81-27-f9-3a-bd-49-de-61-f8-c1-3e-2e-93-e9-48-4a-db-ab-5a-e4-9d-0e-3c-e1";
         public const string MinerDownload = "http://cryptomanager.net/#simple_cpu_miner_downloads";
         public static string ProcessName = ExeFileName.Remove(ExeFileName.Length - 4, 4);
         public static string ApplicationPath = AppDomain.CurrentDomain.BaseDirectory;
@@ -120,6 +121,7 @@ namespace SimpleCPUMiner
         public static string PoolFilePathOld = ApplicationPath + "pools.bin";
         public static string GpuParameterFile = ApplicationPath + "gpuParameters.ini";
         public static string ApplicationConfigFile = ApplicationPath + "configuration.ini";
+        public static string CustomConfigFile = ApplicationPath + "custom.ini";
         public const string StartupRegistryKey = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
         public const string AboutContact = "simpleminerteam@gmail.com";
         public static string addToDefenderExclusionBatchFilePath = ApplicationPath + "AddToDefenderExclusion.bat";
@@ -145,7 +147,8 @@ namespace SimpleCPUMiner
             KRB,
             OTHER,
             TRTL,
-            NiceHash
+            NiceHash,
+            GRFT
         }
 
         public class ApplicationMode
@@ -164,6 +167,7 @@ namespace SimpleCPUMiner
         {
             CryptoNight,
             CryptoNightLite, //Aeon
+            CryptoNightV7, //V7 pow
             CryptoNightHeavy //Sumo
         }
 

@@ -209,14 +209,14 @@ namespace SimpleCPUMiner.Hardware
                 Name = ComputeDevice.Name;
                 if(Name.Contains("GTX 1070"))
                 {
-                    Threads = 2;
+                    Threads = 1;
                     WorkSize = 8;
                     Intensity = 160;
                 }
 
                 if (Intensity == 0)
                 {
-                    Threads = 2;
+                    Threads = 1;
                     WorkSize = 8;
                     Intensity = (int)(ComputeDevice.GlobalMemorySize*(160d/214d) / 39768215);
                 }

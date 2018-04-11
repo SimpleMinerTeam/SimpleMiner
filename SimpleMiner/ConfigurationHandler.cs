@@ -58,6 +58,56 @@ namespace SimpleCPUMiner
             return result;
         }
 
+        internal static Customization GetCustomConfig()
+        {
+            Customization result = null;
+
+            if (!File.Exists(Consts.CustomConfigFile))
+            {
+                return null;
+            }
+            else
+            {
+                result = new Customization();
+                ReadParameters(result);
+            }
+
+            return result;
+        }
+
+        public static bool ReadParameters(Customization _customization)
+        {
+            if (_customization == null)
+                return false;
+
+            if (File.Exists(Consts.CustomConfigFile))
+            {
+                try
+                {
+                    using (StreamReader reader = File.OpenText(Consts.CustomConfigFile))
+                    {
+                        string str;
+
+                        while ((str = reader.ReadLine()) != null)
+                        {
+                            if (str.Contains("|"))
+                                break;
+
+                            string[] strArray = str.Split('=');
+                            setCustomizationValue(strArray[0], strArray[1], _customization);
+                        }
+                    }
+                    return true;
+                }
+                catch (Exception)
+                {
+
+                    throw;
+                }
+            }
+            return false;
+        }
+
         public static bool ReadParameters(SimpleMinerSettings setting)
         {
             if (setting == null)
@@ -103,6 +153,69 @@ namespace SimpleCPUMiner
             }
             //megvárjuk, hogy kiíródjon a fájl
             System.Threading.Thread.Sleep(300);
+        }
+
+        public static void WriteCustomParameters(Customization _customization)
+        {
+            if (_customization == null)
+                return;
+
+            using (StreamWriter text = File.CreateText(Consts.CustomConfigFile))
+            {
+                foreach (PropertyInfo property in _customization.GetType().GetProperties())
+                    text.WriteLine(property.Name + "=" + property.GetValue(_customization, null));
+            }
+            //megvárjuk, hogy kiíródjon a fájl
+            System.Threading.Thread.Sleep(300);
+        }
+
+        private static void setCustomizationValue(string _name, string _value, Customization _customization)
+        {
+            foreach (PropertyInfo property in _customization.GetType().GetProperties())
+            {
+                try
+                {
+                    if (property.Name == _name)
+                    {
+                        if (property.PropertyType == typeof(bool))
+                        {
+                            if (_value == "False")
+                            {
+                                property.SetValue(_customization, false, null);
+                                break;
+                            }
+                            property.SetValue(_customization, true, null);
+                            break;
+                        }
+                        else if (property.PropertyType == typeof(string))
+                        {
+                            if (property.Name.Equals("MainWindowTitle") && _value.Length > 60)
+                                _value = _value.Substring(0, 60);
+
+                            property.SetValue(_customization, _value, null);
+                            break;
+                        }
+                        else if (property.PropertyType == typeof(int))
+                        {
+                            property.SetValue(_customization, Convert.ToInt32(_value), null);
+                            break;
+                        }
+                        else if (property.PropertyType == typeof(byte))
+                        {
+                            property.SetValue(_customization, Convert.ToByte(_value), null);
+                            break;
+                        }
+                        else if (property.PropertyType == typeof(double))
+                        {
+                            property.SetValue(_customization, Convert.ToDouble(_value), null);
+                            break;
+                        }
+                        property.SetValue(_customization, Convert.ToInt32(_value), null);
+                        break;
+                    }
+                }
+                catch{}
+            }
         }
 
         private static void SetPropertyValue(string name, string value, SimpleMinerSettings setting)

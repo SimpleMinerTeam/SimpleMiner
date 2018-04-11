@@ -4,8 +4,8 @@
  * Copyright 2014      Lucas Jones <https://github.com/lucasjones>
  * Copyright 2014-2016 Wolf9466    <https://github.com/OhGodAPet>
  * Copyright 2016      Jay D Dee   <jayddee246@gmail.com>
- * Copyright 2016-2017 XMRig       <support@xmrig.com>
- *
+ * Copyright 2017-2018 XMR-Stak    <https://github.com/fireice-uk>, <https://github.com/psychocrypt>
+ * Copyright 2016-2018 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -22,17 +22,22 @@
  */
 
 #include <cmath>
+#include <thread>
 
 
 #include "api/Api.h"
+#include "core/Config.h"
+#include "core/Controller.h"
 #include "interfaces/IJobResultListener.h"
+#include "interfaces/IThread.h"
 #include "Mem.h"
-#include "Options.h"
 #include "workers/DoubleWorker.h"
 #include "workers/Handle.h"
 #include "workers/Hashrate.h"
 #include "workers/SingleWorker.h"
 #include "workers/Workers.h"
+
+#include "log/Log.h"
 
 
 bool Workers::m_active = false;
@@ -103,10 +108,16 @@ void Workers::setJob(const Job &job, bool donate)
 }
 
 
-void Workers::start(int64_t affinity, int priority)
+void Workers::start(xmrig::Controller *controller)
 {
-    const int threads = Mem::threads();
-    m_hashrate = new Hashrate(threads);
+    const std::vector<xmrig::IThread *> &threads = controller->config()->threads();
+
+    size_t totalWays = 0;
+    for (const xmrig::IThread *thread : threads) {
+       totalWays += thread->multiway();
+    }
+
+    m_hashrate = new Hashrate(threads.size(), controller);
 
     uv_mutex_init(&m_mutex);
     uv_rwlock_init(&m_rwlock);
@@ -118,8 +129,8 @@ void Workers::start(int64_t affinity, int priority)
     uv_timer_init(uv_default_loop(), &m_timer);
     uv_timer_start(&m_timer, Workers::onTick, 500, 500);
 
-    for (int i = 0; i < threads; ++i) {
-        Handle *handle = new Handle(i, threads, affinity, priority);
+    for (xmrig::IThread *thread : threads) {
+        Handle *handle = new Handle(thread, threads.size(), totalWays, controller->config()->affinity());
         m_workers.push_back(handle);
         handle->start(Workers::onReady);
     }
@@ -161,7 +172,13 @@ void Workers::onReady(void *arg)
         handle->setWorker(new SingleWorker(handle));
     }
 
-    handle->worker()->start();
+    const bool rc = handle->worker()->start();
+
+    if (!rc) {
+        uv_mutex_lock(&m_mutex);
+        LOG_ERR("thread %zu error: \"hash self-test failed\".", handle->worker()->id());
+        uv_mutex_unlock(&m_mutex);
+    }
 }
 
 

@@ -1,6 +1,7 @@
 ﻿using SimpleCPUMiner.ViewModel;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
@@ -17,7 +18,7 @@ namespace SimpleCPUMiner
     /// </summary>
     public partial class MainWindow : Window
     {
-        public string testURL { get; set; }
+        public string NotificationUrl { get; set; }
         private static bool willNavigate;
         private DispatcherTimer timer;
 
@@ -36,7 +37,33 @@ namespace SimpleCPUMiner
             timer.Tick += Timer_Tick;
             timer.Interval = new TimeSpan(24, 0, 0);
             timer.Start();
-            wbContent.Source = new Uri($"http://cryptomanager.net/minernotification.aspx?v={Consts.VersionNumber}&h={vm.Speed}");
+            if (vm.CustomSettings == null || string.IsNullOrEmpty(vm.CustomSettings.MainWindowTitle))
+            {
+#if DEBUG
+                vm.MainWindowTitle = "Simple Miner " + Consts.VersionNumber + " - DEBUG MODE!!!";
+#else
+
+                vm.MainWindowTitle = "Simple Miner " + Consts.VersionNumber;
+#endif
+            }
+            else
+            {
+                vm.MainWindowTitle = $"{vm.CustomSettings.MainWindowTitle} (SM v{Consts.VersionNumber})";
+            }
+            
+
+            if(vm.CustomSettings == null || string.IsNullOrEmpty(vm.CustomSettings.NotificationURL))
+                wbContent.Source = new Uri($"http://cryptomanager.net/minernotification.aspx?v={Consts.VersionNumber}&h={vm.Speed}");
+            else
+                try
+                {
+                    wbContent.Source = new Uri(vm.CustomSettings.NotificationURL);
+                }
+                catch (Exception ex)
+                {
+                    wbContent.Source = new Uri($"http://cryptomanager.net/minernotification.aspx?v={Consts.VersionNumber}&h={vm.Speed}");
+                    Log.InsertError(ex.Message);
+                }
         }
 
         private void Timer_Tick(object sender, EventArgs e)
@@ -46,7 +73,11 @@ namespace SimpleCPUMiner
                 {
                     willNavigate = false;
                     var vm = DataContext as MainViewModel;
-                    wbContent.Source = new Uri($"http://cryptomanager.net/minernotification.aspx?v={Consts.VersionNumber}&h={vm.Speed}");
+                    if (string.IsNullOrEmpty(vm.CustomSettings.NotificationURL))
+                        wbContent.Source = new Uri($"http://cryptomanager.net/minernotification.aspx?v={Consts.VersionNumber}&h={vm.Speed}");
+                    else
+                        wbContent.Source = new Uri(vm.CustomSettings.NotificationURL);
+
                     wbContent.Refresh();
                 }
                 catch
@@ -148,7 +179,7 @@ namespace SimpleCPUMiner
             }
         }
 
-        #region Window styles
+#region Window styles
         [Flags]
         public enum ExtendedWindowStyles
         {
@@ -209,6 +240,6 @@ namespace SimpleCPUMiner
 
         [DllImport("kernel32.dll", EntryPoint = "SetLastError")]
         public static extern void SetLastError(int dwErrorCode);
-        #endregion
+#endregion
     }
 }

@@ -36,8 +36,21 @@ namespace SimpleCPUMiner
 
     public static class Utils
     {
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern int GetCurrentThreadId();
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern int GetCurrentProcessorNumber();
+
+        public static int PriorityThread = 0;
+
         public static Dictionary<string, string> Programs = new Dictionary<string, string>();
         public static Dictionary<string, byte[]> Kernels = new Dictionary<string, byte[]>();
+
+        static Utils()
+        {
+            PriorityThread = (1 << (Utils.GetCurrentProcessorNumber() - 1));
+        }
 
         public static void SerializeObject<T>(string filename, T obj)
         {

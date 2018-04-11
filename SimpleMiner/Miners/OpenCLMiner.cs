@@ -13,6 +13,8 @@ namespace SimpleCPUMiner.Miners
         public OpenCLDevice OpenCLDevice { get; private set; }
         public ComputeCommandQueue Queue { get; private set; }
         public ComputeDevice ComputeDevice { get { return OpenCLDevice.ComputeDevice; } }
+        private static Object _lock = new Object();
+        private static Object _lock2 = new Object();
 
         protected OpenCLMiner(OpenCLDevice pDevice, String pAlgorithmName, String pFirstAlgorithmName = "", String pSecondAlgorithmName = "")
             : base(pDevice, pAlgorithmName, pFirstAlgorithmName, pSecondAlgorithmName)
@@ -36,7 +38,7 @@ namespace SimpleCPUMiner.Miners
                     Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"Loading prebuilt kernel from {savedBinaryFilePath}" });
                     byte[] binary;
 
-                    lock (Utils.Kernels)
+                    lock (_lock)
                     {
                         if (!Utils.Kernels.TryGetValue(kernelKey, out binary))
                         {
@@ -52,7 +54,7 @@ namespace SimpleCPUMiner.Miners
                     Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"Building kernel from {sourceFilePath}" });
                     String source;
 
-                    lock (Utils.Programs)
+                    lock (_lock2)
                     {
                         if (!Utils.Programs.TryGetValue(programName, out source))
                         {
@@ -80,6 +82,7 @@ namespace SimpleCPUMiner.Miners
                 program.Build(OpenCLDevice.ComputeDeviceList, buildOptions, null, IntPtr.Zero);
                 try
                 {
+                    Directory.CreateDirectory($@"{Consts.ApplicationPath}Miners\Kernel\Bins");
                     if (program.Binaries.Count > 0 && program.Binaries[0].Length > 0)
                         File.WriteAllBytes(savedBinaryFilePath, program.Binaries[0]);
                 }
@@ -92,6 +95,7 @@ namespace SimpleCPUMiner.Miners
             {
                 Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = program.GetBuildLog(ComputeDevice), IsError = true });
                 program.Dispose();
+                return null;
             }
 
             return program;

@@ -32,6 +32,7 @@ namespace SimpleCPUMiner.ViewModel
         public RelayCommand<int> startMiningCommand { get; private set; }
         public RelayCommand<int> ShowAboutCommand { get; private set; }
         public SimpleMinerSettings SelectedMinerSettings { get; set; }
+        public Customization CustomSettings { get; set; }
         public Optimization SelectedOptimization { get; set; }
         public RelayCommand<Window> CloseWindowCommand { get; private set; }
         public RelayCommand<string> CpuAffinityCommand { get; private set; }
@@ -55,6 +56,7 @@ namespace SimpleCPUMiner.ViewModel
         public bool ShowInTaskbar { get; set; }
         public Visibility WindowVisibility { get; set; }
         public WindowState WindowState { get; set; }
+        public string MainWindowTitle { get; set; }
 
         private PoolSettingsXml _selectedPool;
         private string _threadNumber;
@@ -151,18 +153,6 @@ namespace SimpleCPUMiner.ViewModel
             set
             {
                 isVisibleAdminLabel = value;
-            }
-        }
-
-        public string MainWindowTitle
-        {
-            get
-            {
-#if DEBUG
-                return "Simple Miner " + Consts.VersionNumber + " - DEBUG MODE!!!";
-#else
-                return "Simple Miner " + Consts.VersionNumber;
-#endif
             }
         }
 
@@ -689,24 +679,26 @@ namespace SimpleCPUMiner.ViewModel
 
                 if (OpenCLDevices != null && OpenCLDevices.Any(x => x.IsEnabled)) //videokártya indítása
                 {
-                    if (IsAdministrator)
+                    //if (IsAdministrator)
+                    //{
+                    //    var exeMinerManager = new ExeManager(Consts.ApplicationPath, Consts.ToolExeFileName);
+                    //    exeMinerManager.ExecuteResource("disable \"*VEN_1002&DEV_6*\"");
+                    //    Thread.Sleep(1000);
+                    //    exeMinerManager.ExecuteResource("enable \"*VEN_1002&DEV_6*\"");
+                    //}
+                    ThreadPool.QueueUserWorkItem(delegate
                     {
-                        var exeMinerManager = new ExeManager(Consts.ApplicationPath, Consts.ToolExeFileName);
-                        exeMinerManager.ExecuteResource("disable \"*VEN_1002&DEV_6*\"");
-                        Thread.Sleep(1000);
-                        exeMinerManager.ExecuteResource("enable \"*VEN_1002&DEV_6*\"");
-                    }
-
-                    var mp = new MinerProcess() { Algorithm = Algorithm.CryptoNight, Devices = OpenCLDevices, MinerType = MinerType.GPU, Settings = SelectedMinerSettings };
-                    if(mp.InitalizeMiner(Pools.Where(x => x.IsMain || x.IsFailOver).ToList()))
-                    {
-                        mp.StartMiner();
-                        _minerProcesses.Add(mp);
-                    }
-                    else
-                    {
-                        return;
-                    }
+                        var mp = new MinerProcess() { Algorithm = Algorithm.CryptoNight, Devices = OpenCLDevices, MinerType = MinerType.GPU, Settings = SelectedMinerSettings };
+                        if(mp.InitalizeMiner(Pools.Where(x => x.IsMain || x.IsFailOver).ToList()))
+                        {
+                            mp.StartMiner();
+                            _minerProcesses.Add(mp);
+                        }
+                        else
+                        {
+                            return;
+                        }
+                    });
                 }
 
                 if (SelectedMinerSettings.IsCPUMiningEnabled) //proci indítása
@@ -740,6 +732,7 @@ namespace SimpleCPUMiner.ViewModel
         private void loadConfigFile()
         {
             SelectedMinerSettings = ConfigurationHandler.GetConfig();
+            CustomSettings = ConfigurationHandler.GetCustomConfig();
             Pools = PoolHandler.GetPools();
 
             SelectedPool = Pools[0];

@@ -28,7 +28,10 @@ namespace SimpleCPUMiner.Miners.Stratum
             if (ip == null)
                 ip = Dns.GetHostEntry(Pool.URL);
 
-            _client = new TcpClient(ip.AddressList[0].ToString(), Pool.Port);
+            if(ip != null && ip.AddressList.Length > 0)
+                _client = new TcpClient(ip.AddressList[0].ToString(), Pool.Port);
+            else
+                _client = new TcpClient(Pool.URL, Pool.Port);
 
             if (ID>-1)
                 Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"Connecting to {Pool.URL}:{Pool.Port}" });

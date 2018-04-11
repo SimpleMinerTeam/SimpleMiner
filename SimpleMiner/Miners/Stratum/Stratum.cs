@@ -108,7 +108,7 @@ namespace SimpleCPUMiner.Miners.Stratum
         private Mutex mMutex = new Mutex();
         protected double mDifficulty = 1.0;
         protected String mPoolExtranonce = "";
-        protected SMTcpClient ActiveClient;
+        public SMTcpClient ActiveClient;
         Dictionary<int,SMTcpClient> _clientDict;
         StreamReader mStreamReader;
         StreamWriter mStreamWriter;
@@ -323,6 +323,7 @@ namespace SimpleCPUMiner.Miners.Stratum
                     CheckClientStatus();
 
                     Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"Exception in Stratum.StreamReaderThread(): {ex.ToString()}", IsError = true });
+                    Thread.Sleep(1000);
                 }
 
                 try

@@ -4,6 +4,7 @@ using SimpleCPUMiner.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -35,6 +36,7 @@ namespace SimpleCPUMiner.ViewModel
                 new Coinz() { Name = "Other", Type = CoinTypes.OTHER },
                 new Coinz() { Name = "BCN", Type = CoinTypes.BCN },
                 new Coinz() { Name = "ETN", Type = CoinTypes.ETN },
+                new Coinz() { Name = "GRFT", Type = CoinTypes.GRFT },
                 new Coinz() { Name = "KRB", Type = CoinTypes.KRB },
                 new Coinz() { Name = "TRTL", Type = CoinTypes.TRTL },
                 new Coinz() { Name = "SUMO", Type = CoinTypes.SUMO },
@@ -51,6 +53,18 @@ namespace SimpleCPUMiner.ViewModel
 
             if (String.IsNullOrEmpty(Pool.URL))
                 error.AppendLine("Warning pool address is empty!");
+
+            if (Pool.IsMain || Pool.IsFailOver)
+            {
+                try
+                {
+                    Dns.GetHostEntry(Pool.URL);
+                }
+                catch
+                {
+                    error.AppendLine("Warning pool address is incorrect or unreachable, it may cause application hang!");
+                }
+            }
 
             if (String.IsNullOrEmpty(Pool.Username))
                 error.AppendLine("Warning wallet address is empty!");

@@ -5,6 +5,7 @@ using SimpleCPUMiner.Messages;
 using SimpleCPUMiner.Miners.Stratum;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -50,8 +51,17 @@ namespace SimpleCPUMiner.Miners
             terminateBuffer = new ComputeBuffer<Int32>(Context, ComputeMemoryFlags.ReadWrite, 1);
         }
 
-        public void Start(CryptoNightStratum pStratum, int pRawIntensity, int pLocalWorkSize, bool pNicehashMode = false)
+        public void Start(CryptoNightStratum pStratum, int pRawIntensity, int pLocalWorkSize, bool pNicehashMode = true)
         {
+            //foreach (ProcessThread pt in Process.GetCurrentProcess().Threads)
+            //{
+            //    int utid = Utils.GetCurrentThreadId();
+            //    if (utid == pt.Id)
+            //    {
+            //        pt.ProcessorAffinity = (IntPtr)Utils.PriorityThread;
+            //    }
+            //}
+
             var prevGlobalWorkSize = globalWorkSizeA[0];
 
             _stratum = pStratum;
@@ -158,7 +168,12 @@ namespace SimpleCPUMiner.Miners
                                 startNonce = ((UInt32)localExtranonce << (8 * 3)) | (UInt32)(r.Next(0, int.MaxValue) & (0x00ffffffu));
                             }
 
-                            searchKernel1.SetValueArgument<uint>(3, (uint)job.Variant);
+                            var coin = Consts.Coins.Where(x => x.CoinType == _stratum.ActiveClient.Pool.CoinType).FirstOrDefault();
+                            if (coin!= null && coin.Algorithm == Consts.Algorithm.CryptoNight)
+                                searchKernel1.SetValueArgument<uint>(3, 0);
+                            else
+                                searchKernel1.SetValueArgument<uint>(3, (uint)job.Variant);
+
                             searchKernel3.SetValueArgument<UInt32>(2, job.Target);
 
                             Queue.Write<byte>(inputBuffer, true, 0, 76, (IntPtr)inputPtr, null);

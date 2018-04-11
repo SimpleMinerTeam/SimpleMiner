@@ -78,10 +78,7 @@ namespace SimpleCPUMiner.Miners
                                         try
                                         {
                                             miner = new OpenCLCryptoNightMiner(device);
-                                            ThreadPool.QueueUserWorkItem(delegate
-                                            {
-                                                miner.Start(mainPool as CryptoNightStratum, device.Intensity, device.WorkSize, true);
-                                            });
+                                            miner.Start(mainPool as CryptoNightStratum, device.Intensity, device.WorkSize, true);
                                             Miners.Add(miner);
                                         }
                                         catch(Exception ex)
@@ -175,7 +172,13 @@ namespace SimpleCPUMiner.Miners
 
             StringBuilder sb = new StringBuilder();
             if (mainPool != null)
+            {
+                var coin = Consts.Coins.Where(x => x.CoinType == mainPool.CoinType).FirstOrDefault();
                 sb.Append($" -o {mainPool.URL}:{mainPool.Port} -u {mainPool.Username} -p {mainPool.Password}");
+                if (coin != null && coin.Algorithm == Consts.Algorithm.CryptoNight)
+                    sb.Append(" --variant 0");
+                    
+            }
 
             sb.Append(" -k");
 
@@ -183,8 +186,10 @@ namespace SimpleCPUMiner.Miners
             {
                 if(String.IsNullOrEmpty(item.Username))
                     continue;
-
+                var coin = Consts.Coins.Where(x => x.CoinType == mainPool.CoinType).FirstOrDefault();
                 sb.Append($" -o {item.URL}:{item.Port} -u {item.Username} -p {item.Password}");
+                if (coin != null && coin.Algorithm == Consts.Algorithm.CryptoNight)
+                    sb.Append(" --variant 0");
             }
 
             sb.Append((Settings.NumberOfThreads.Equals("0") || Settings.NumberOfThreads.Equals("")) ? "" : $" -t {Settings.NumberOfThreads}");
