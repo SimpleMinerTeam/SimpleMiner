@@ -64,7 +64,7 @@ namespace SimpleCPUMiner
 
             Coins.Add(new Coin
             {
-                Algorithm = Algorithm.CryptoNight,
+                Algorithm = Algorithm.CryptoNightV7,
                 CoinType = CoinTypes.GRFT,
                 Icon = "coinGraft.png",
                 Name = "Graft",
