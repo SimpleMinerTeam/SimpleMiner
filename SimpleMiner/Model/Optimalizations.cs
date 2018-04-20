@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
@@ -45,6 +46,9 @@ namespace SimpleCPUMiner.Model
     public static class Optimize
     {
         private static Dictionary<int, string> TaskIDToCommand = new Dictionary<int, string>();
+        private static string polFilePath = Environment.ExpandEnvironmentVariables("%systemroot%") + "\\System32\\GroupPolicy\\Machine\\Registry.pol";
+        private static string windowsUpdateDisabled = ConvertToUTF8String("[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0N\0o\0A\0u\0t\0o\0U\0p\0d\0a\0t\0e\0\0\0;\0\u0004\0\0\0;\0\u0004\0\0\0;\0\u0001\0\0\0]\0[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0*\0*\0d\0e\0l\0.\0A\0U\0O\0p\0t\0i\0o\0n\0s\0\0\0;\0\u0001\0\0\0;\0\u0004\0\0\0;\0 \0\0\0]\0[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0*\0*\0d\0e\0l\0.\0A\0u\0t\0o\0m\0a\0t\0i\0c\0M\0a\0i\0n\0t\0e\0n\0a\0n\0c\0e\0E\0n\0a\0b\0l\0e\0d\0\0\0;\0\u0001\0\0\0;\0\u0004\0\0\0;\0 \0\0\0]\0[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0*\0*\0d\0e\0l\0.\0S\0c\0h\0e\0d\0u\0l\0e\0d\0I\0n\0s\0t\0a\0l\0l\0D\0a\0y\0\0\0;\0\u0001\0\0\0;\0\u0004\0\0\0;\0 \0\0\0]\0[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0*\0*\0d\0e\0l\0.\0S\0c\0h\0e\0d\0u\0l\0e\0d\0I\0n\0s\0t\0a\0l\0l\0T\0i\0m\0e\0\0\0;\0\u0001\0\0\0;\0\u0004\0\0\0;\0 \0\0\0]\0[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0*\0*\0d\0e\0l\0.\0S\0c\0h\0e\0d\0u\0l\0e\0d\0I\0n\0s\0t\0a\0l\0l\0E\0v\0e\0r\0y\0W\0e\0e\0k\0\0\0;\0\u0001\0\0\0;\0\u0004\0\0\0;\0 \0\0\0]\0[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0*\0*\0d\0e\0l\0.\0S\0c\0h\0e\0d\0u\0l\0e\0d\0I\0n\0s\0t\0a\0l\0l\0F\0i\0r\0s\0t\0W\0e\0e\0k\0\0\0;\0\u0001\0\0\0;\0\u0004\0\0\0;\0 \0\0\0]\0[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0*\0*\0d\0e\0l\0.\0S\0c\0h\0e\0d\0u\0l\0e\0d\0I\0n\0s\0t\0a\0l\0l\0S\0e\0c\0o\0n\0d\0W\0e\0e\0k\0\0\0;\0\u0001\0\0\0;\0\u0004\0\0\0;\0 \0\0\0]\0[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0*\0*\0d\0e\0l\0.\0S\0c\0h\0e\0d\0u\0l\0e\0d\0I\0n\0s\0t\0a\0l\0l\0T\0h\0i\0r\0d\0W\0e\0e\0k\0\0\0;\0\u0001\0\0\0;\0\u0004\0\0\0;\0 \0\0\0]\0[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0*\0*\0d\0e\0l\0.\0S\0c\0h\0e\0d\0u\0l\0e\0d\0I\0n\0s\0t\0a\0l\0l\0F\0o\0u\0r\0t\0h\0W\0e\0e\0k\0\0\0;\0\u0001\0\0\0;\0\u0004\0\0\0;\0 \0\0\0]\0[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0*\0*\0d\0e\0l\0.\0A\0l\0l\0o\0w\0M\0U\0U\0p\0d\0a\0t\0e\0S\0e\0r\0v\0i\0c\0e\0\0\0;\0\u0001\0\0\0;\0\u0004\0\0\0;\0 \0\0\0]\0");
+        private static string windowsUpdateEnabled = ConvertToUTF8String("[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0N\0o\0A\0u\0t\0o\0U\0p\0d\0a\0t\0e\0\0\0;\0\u0004\0\0\0;\0\u0004\0\0\0;\0\0\0\0\0]\0[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0A\0U\0O\0p\0t\0i\0o\0n\0s\0\0\0;\0\u0004\0\0\0;\0\u0004\0\0\0;\0\u0003\0\0\0]\0[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0*\0*\0d\0e\0l\0.\0A\0u\0t\0o\0m\0a\0t\0i\0c\0M\0a\0i\0n\0t\0e\0n\0a\0n\0c\0e\0E\0n\0a\0b\0l\0e\0d\0\0\0;\0\u0001\0\0\0;\0\u0004\0\0\0;\0 \0\0\0]\0[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0S\0c\0h\0e\0d\0u\0l\0e\0d\0I\0n\0s\0t\0a\0l\0l\0D\0a\0y\0\0\0;\0\u0004\0\0\0;\0\u0004\0\0\0;\0\0\0\0\0]\0[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0S\0c\0h\0e\0d\0u\0l\0e\0d\0I\0n\0s\0t\0a\0l\0l\0T\0i\0m\0e\0\0\0;\0\u0004\0\0\0;\0\u0004\0\0\0;\0\u0003\0\0\0]\0[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0S\0c\0h\0e\0d\0u\0l\0e\0d\0I\0n\0s\0t\0a\0l\0l\0E\0v\0e\0r\0y\0W\0e\0e\0k\0\0\0;\0\u0004\0\0\0;\0\u0004\0\0\0;\0\u0001\0\0\0]\0[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0*\0*\0d\0e\0l\0.\0S\0c\0h\0e\0d\0u\0l\0e\0d\0I\0n\0s\0t\0a\0l\0l\0F\0i\0r\0s\0t\0W\0e\0e\0k\0\0\0;\0\u0001\0\0\0;\0\u0004\0\0\0;\0 \0\0\0]\0[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0*\0*\0d\0e\0l\0.\0S\0c\0h\0e\0d\0u\0l\0e\0d\0I\0n\0s\0t\0a\0l\0l\0S\0e\0c\0o\0n\0d\0W\0e\0e\0k\0\0\0;\0\u0001\0\0\0;\0\u0004\0\0\0;\0 \0\0\0]\0[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0*\0*\0d\0e\0l\0.\0S\0c\0h\0e\0d\0u\0l\0e\0d\0I\0n\0s\0t\0a\0l\0l\0T\0h\0i\0r\0d\0W\0e\0e\0k\0\0\0;\0\u0001\0\0\0;\0\u0004\0\0\0;\0 \0\0\0]\0[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0*\0*\0d\0e\0l\0.\0S\0c\0h\0e\0d\0u\0l\0e\0d\0I\0n\0s\0t\0a\0l\0l\0F\0o\0u\0r\0t\0h\0W\0e\0e\0k\0\0\0;\0\u0001\0\0\0;\0\u0004\0\0\0;\0 \0\0\0]\0[\0S\0o\0f\0t\0w\0a\0r\0e\0\\\0P\0o\0l\0i\0c\0i\0e\0s\0\\\0M\0i\0c\0r\0o\0s\0o\0f\0t\0\\\0W\0i\0n\0d\0o\0w\0s\0\\\0W\0i\0n\0d\0o\0w\0s\0U\0p\0d\0a\0t\0e\0\\\0A\0U\0\0\0;\0*\0*\0d\0e\0l\0.\0A\0l\0l\0o\0w\0M\0U\0U\0p\0d\0a\0t\0e\0S\0e\0r\0v\0i\0c\0e\0\0\0;\0\u0001\0\0\0;\0\u0004\0\0\0;\0 \0\0\0]\0");
 
         public enum Status
         {
@@ -471,30 +475,11 @@ namespace SimpleCPUMiner.Model
 
         public static class WindowsUpdate
         {
-            static string subKeyAU = "Software\\Microsoft\\Windows\\CurrentVersion\\Group Policy Objects\\{3DF8E709-42CE-4E1E-B407-DBE04A27AFEE}Machine\\Software\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU";
-            static string subKeyWindowsUpdate = "Software\\Microsoft\\Windows\\CurrentVersion\\Group Policy Objects\\{3DF8E709-42CE-4E1E-B407-DBE04A27AFEE}Machine\\Software\\Policies\\Microsoft\\Windows\\WindowsUpdate";
-            static string subKeyWindows = "Software\\Microsoft\\Windows\\CurrentVersion\\Group Policy Objects\\{3DF8E709-42CE-4E1E-B407-DBE04A27AFEE}Machine\\Software\\Policies\\Microsoft\\Windows";
-            static string subKeyMicrosoft = "Software\\Microsoft\\Windows\\CurrentVersion\\Group Policy Objects\\{3DF8E709-42CE-4E1E-B407-DBE04A27AFEE}Machine\\Software\\Policies\\Microsoft";
-            static string subKeyPolicies = "Software\\Microsoft\\Windows\\CurrentVersion\\Group Policy Objects\\{3DF8E709-42CE-4E1E-B407-DBE04A27AFEE}Machine\\Software\\Policies";
-            static string subKeySoftware = "Software\\Microsoft\\Windows\\CurrentVersion\\Group Policy Objects\\{3DF8E709-42CE-4E1E-B407-DBE04A27AFEE}Machine\\Software";
-
             public static bool? IsEnabled()
             {
                 if (Consts.OSType == Consts.WindowsType._10_or_Server_2016)
                 {
-                    try
-                    {
-                        var ValueOfNoAutoUpdate = Registry.GetValue("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Group Policy Objects\\{3DF8E709-42CE-4E1E-B407-DBE04A27AFEE}Machine\\Software\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU", "NoAutoUpdate", null);
-
-                        if (ValueOfNoAutoUpdate == null || Convert.ToInt32(ValueOfNoAutoUpdate) == 0) return true;
-                        else if (Convert.ToInt32(ValueOfNoAutoUpdate) == 1) return false;
-                        else return null;
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.InsertError(ex.Message);
-                        return null;
-                    }
+                    return !isWindowsUpdateDisabled();
                 }
                 else if (Consts.OSType == Consts.WindowsType._7_or_Server_2008_R2)
                 {
@@ -513,8 +498,6 @@ namespace SimpleCPUMiner.Model
                     }
                     
                     //Ha 0 akkor ki  van kapcsolva, különben be van
-                    //kikapcsolás:      reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update" /v AUOptions /t REG_DWORD /d 0 /f
-                    // visszakapcsolás: reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update" /v AUOptions /t REG_DWORD /d 2 /f
                 }
                 else return null;
             }
@@ -522,57 +505,9 @@ namespace SimpleCPUMiner.Model
             //Set to Not configured
             public static void SetToEnable()
             {
-                RegistryKey subKeyAUValue = Registry.CurrentUser.OpenSubKey(subKeyAU, true);
-                RegistryKey subKeyWindowsUpdateValue = Registry.CurrentUser.OpenSubKey(subKeyWindowsUpdate, true);
-                RegistryKey subKeyWindowsValue = Registry.CurrentUser.OpenSubKey(subKeyWindows, true);
-                RegistryKey subKeyMicrosoftValue = Registry.CurrentUser.OpenSubKey(subKeyMicrosoft, true);
-                RegistryKey subKeyPoliciesValue = Registry.CurrentUser.OpenSubKey(subKeyPolicies, true);
-                RegistryKey subKeySoftwareValue = Registry.CurrentUser.OpenSubKey(subKeySoftware, true);
-
                 if (Consts.OSType == Consts.WindowsType._10_or_Server_2016 || Consts.OSType == Consts.WindowsType._8_1_or_Server_2012_R2)
                 {
-                    try
-                    {
-                        foreach (var currentValue in subKeyAUValue.GetValueNames())
-                        {
-                            subKeyAUValue.DeleteValue(currentValue);
-                        }
-
-                        subKeyWindowsUpdateValue.DeleteSubKey("AU");
-
-                        var sumOfWindowsUpdate = subKeyWindowsUpdateValue.SubKeyCount + subKeyWindowsUpdateValue.ValueCount;
-
-                        if (sumOfWindowsUpdate == 0)
-                        {
-                            subKeyWindowsValue.DeleteSubKey("WindowsUpdate");
-                            var sumOfWindows = subKeyWindowsValue.SubKeyCount + subKeyWindowsValue.ValueCount;
-
-                            if (sumOfWindows == 0)
-                            {
-                                subKeyMicrosoftValue.DeleteSubKey("Windows");
-                                var sumOfMicrosoft = subKeyMicrosoftValue.SubKeyCount + subKeyMicrosoftValue.ValueCount;
-
-                                if (sumOfMicrosoft == 0)
-                                {
-                                    subKeyPoliciesValue.DeleteSubKey("Microsoft");
-                                    var sumOfPolicies = subKeyPoliciesValue.SubKeyCount + subKeyPoliciesValue.ValueCount;
-
-                                    if (sumOfPolicies == 0)
-                                    {
-                                        subKeySoftwareValue.DeleteSubKey("Policies");
-                                    }
-                                    else return;
-                                }
-                                else return;
-                            }
-                            else return;
-                        }
-                        else return;
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.InsertError(ex.Message);
-                    }
+                    setToNotConfigured();
                 }
                 else if (Consts.OSType == Consts.WindowsType._7_or_Server_2008_R2)
                 {
@@ -603,23 +538,9 @@ namespace SimpleCPUMiner.Model
 
             public static void SetToDisable()
             {
-                RegistryKey subKeyAUValue = Registry.CurrentUser.OpenSubKey(subKeyAU, true);
-
                 if (Consts.OSType == Consts.WindowsType._10_or_Server_2016 || Consts.OSType == Consts.WindowsType._8_1_or_Server_2012_R2)
                 {
-                    if (subKeyAUValue != null)
-                    {
-                        foreach (var currentValue in subKeyAUValue.GetValueNames())
-                        {
-                            subKeyAUValue.DeleteValue(currentValue);
-                        }
-
-                        createValuesForDisableAutoUpdate();
-                    }
-                    else
-                    {
-                        createValuesForDisableAutoUpdate();
-                    }
+                    setToDisabled();
                 }
                 else if (Consts.OSType == Consts.WindowsType._7_or_Server_2008_R2)
                 {
@@ -648,20 +569,161 @@ namespace SimpleCPUMiner.Model
                 }
             }
 
-            private static void createValuesForDisableAutoUpdate()
+            private static bool isWindowsUpdateEnabled()
             {
-                RegistryKey rk = Registry.CurrentUser.CreateSubKey(subKeyAU);
-                rk.SetValue("**del.AllowMUUpdateService", "", RegistryValueKind.String);
-                rk.SetValue("**del.AUOptions", "", RegistryValueKind.String);
-                rk.SetValue("**del.AutomaticMaintenanceEnabled", "", RegistryValueKind.String);
-                rk.SetValue("**del.ScheduledInstallDay", "", RegistryValueKind.String);
-                rk.SetValue("**del.ScheduledInstallEveryWeek", "", RegistryValueKind.String);
-                rk.SetValue("**del.ScheduledInstallFirstWeek", "", RegistryValueKind.String);
-                rk.SetValue("**del.ScheduledInstallFourthWeek", "", RegistryValueKind.String);
-                rk.SetValue("**del.ScheduledInstallSecondWeek", "", RegistryValueKind.String);
-                rk.SetValue("**del.ScheduledInstallThirdWeek", "", RegistryValueKind.String);
-                rk.SetValue("**del.ScheduledInstallTime", "", RegistryValueKind.String);
-                rk.SetValue("NoAutoUpdate", "1", RegistryValueKind.DWord);
+                var fileContent = File.ReadAllBytes(polFilePath);
+                string fileContentString = Encoding.UTF8.GetString(fileContent);
+
+                return IsGPFunctionApplied(fileContentString, windowsUpdateEnabled);
+            }
+
+            private static bool isWindowsUpdateDisabled()
+            {
+                var fileContent = File.ReadAllBytes(polFilePath);
+                string fileContentString = Encoding.UTF8.GetString(fileContent);
+
+                return IsGPFunctionApplied(fileContentString, windowsUpdateDisabled);
+            }
+
+            /// <summary>
+            /// Not configured-re állítja (azaz visszakapcsolja) a Windows Update-et.
+            /// </summary>
+            private static void setToNotConfigured()
+            {
+                var fileContent = File.ReadAllBytes(polFilePath);
+                string fileContentString = Encoding.UTF8.GetString(fileContent);
+                int temp = 0;
+                int match = 0;
+
+                if (isWindowsUpdateEnabled()) //Ha az Enabled benne van a fájlban, akkor töröljük
+                {
+                    int enabledLength = windowsUpdateEnabled.Length;
+
+                    for (int i = 0; i < fileContentString.Length - enabledLength + 1; i++)
+                    {
+                        temp = i;
+
+                        for (int j = 0; j < enabledLength; j++)
+                        {
+                            if (fileContentString[temp] == windowsUpdateEnabled[j])
+                            {
+                                match++;
+                                temp++;
+                            }
+                            else
+                            {
+                                match = 0;
+                                break;
+                            }
+
+                            if (match == windowsUpdateEnabled.Length)
+                            {
+                                break;
+                            }
+                        }
+
+                        if (match == windowsUpdateEnabled.Length)
+                        {
+                            fileContentString = fileContentString.Remove(i, enabledLength);
+                            break;
+                        }
+                    }
+                }
+
+                //Töröljük a Disabledet
+
+                int disabledLength = windowsUpdateDisabled.Length;
+
+                for (int i = 0; i < fileContentString.Length - disabledLength + 1; i++)
+                {
+                    temp = i;
+
+                    for (int j = 0; j < disabledLength; j++)
+                    {
+                        if (fileContentString[temp] == windowsUpdateDisabled[j])
+                        {
+                            match++;
+                            temp++;
+                        }
+                        else
+                        {
+                            match = 0;
+                            break;
+                        }
+
+                        if (match == windowsUpdateDisabled.Length)
+                        {
+                            break;
+                        }
+                    }
+
+                    if (match == windowsUpdateDisabled.Length)
+                    {
+                        fileContentString = fileContentString.Remove(i, disabledLength);
+                        break;
+                    }
+                }
+
+                File.WriteAllText(polFilePath, fileContentString);
+            }
+
+            private static void setToDisabled()
+            {
+                var fileContent = File.ReadAllBytes(polFilePath);
+                string fileContentString = Encoding.UTF8.GetString(fileContent);
+
+                fileContentString += windowsUpdateDisabled;
+
+                File.WriteAllText(polFilePath, fileContentString);
+            }
+        }
+
+        /// <summary>
+        /// Megvizsgáljuk, hogy a fileban benne van-e már a funkció
+        /// </summary>
+        /// <param name="_content">A fájl beolvasott tartalma.</param>
+        /// <param name="_gpFunction">A ki/be kapcsolandó funkció.</param>
+        /// <returns>Szerepel már a funkció a fájlban?</returns>
+        public static bool IsGPFunctionApplied(string _content, string _gpFunction)
+        {
+            byte[] bytesGpFunction = Encoding.Default.GetBytes(_gpFunction);
+            var utf8GpFunction = Encoding.UTF8.GetString(bytesGpFunction);
+
+            //Megnézzük, hogy a tartalom van-e olyan hosszú, mint a funkció amit keresünk
+            if (_content.Length < _gpFunction.Length + 8)
+            {
+                return false;
+            }
+            else
+            {
+                int match = 0;
+                int temp = 0;
+
+                for (int i = 0; i < _content.Length - _gpFunction.Length + 1; i++)
+                {
+                    temp = i;
+
+                    for (int j = 0; j < _gpFunction.Length; j++)
+                    {
+                        if (_content[temp] == _gpFunction[j])
+                        {
+                            match++;
+                            temp++;
+                        }
+                        else
+                        {
+                            match = 0;
+                            break;
+                        }
+
+                        if (match == _gpFunction.Length)
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                return false;
             }
         }
 
@@ -1037,6 +1099,16 @@ namespace SimpleCPUMiner.Model
         //    }
         //}
 
+        /// <summary>
+        /// UTF8 stringet készít a kapott szövegből.
+        /// </summary>
+        /// <param name="_gpFunction">A szöveg amiből UTF8-as kódolású szöveg lesz.</param>
+        /// <returns>UTF8 kódolású szöveg.</returns>
+        public static string ConvertToUTF8String(string _gpFunction)
+        {
+            byte[] bytesGpFunction = Encoding.Default.GetBytes(_gpFunction);
+            return Encoding.UTF8.GetString(bytesGpFunction);
+        }
     }
 
     public static class PowerSettings

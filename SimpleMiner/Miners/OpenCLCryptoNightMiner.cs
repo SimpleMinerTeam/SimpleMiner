@@ -3,6 +3,7 @@ using GalaSoft.MvvmLight.Messaging;
 using SimpleCPUMiner.Hardware;
 using SimpleCPUMiner.Messages;
 using SimpleCPUMiner.Miners.Stratum;
+using SimpleCPUMiner.Model;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -41,6 +42,8 @@ namespace SimpleCPUMiner.Miners
         private ComputeBuffer<Int32> terminateBuffer = null;
         private ComputeBuffer<byte> scratchpadsBuffer = null;
 
+        Coin _coin = null;
+
         public bool NiceHashMode { get; private set; }
 
         public OpenCLCryptoNightMiner(OpenCLDevice pDevice)
@@ -65,15 +68,18 @@ namespace SimpleCPUMiner.Miners
             var prevGlobalWorkSize = globalWorkSizeA[0];
 
             _stratum = pStratum;
-            globalWorkSizeA[0] = globalWorkSizeB[0] = pRawIntensity * pLocalWorkSize;
+            _coin = Consts.Coins.Where(x => x.CoinType == _stratum.ActiveClient.Pool.CoinType).FirstOrDefault();
+
+            if(_coin.Algorithm == Consts.Algorithm.CryptoNightHeavy)
+                globalWorkSizeA[0] = globalWorkSizeB[0] = Utils.NearestEven(pRawIntensity * pLocalWorkSize/2); 
+            else
+                globalWorkSizeA[0] = globalWorkSizeB[0] = pRawIntensity * pLocalWorkSize;
+
             localWorkSizeA[0] = localWorkSizeB[0] = pLocalWorkSize;
             NiceHashMode = pNicehashMode;
 
             if (statesBuffer == null)
                 statesBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite, 200 * globalWorkSizeA[0]);
-
-            if (scratchpadsBuffer == null)
-                scratchpadsBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite, ((long)1 << 21) * globalWorkSizeA[0]);
 
             base.Start();
         }
@@ -94,8 +100,35 @@ namespace SimpleCPUMiner.Miners
             ComputeProgram program;
             var GCN1 = computeDevice.Name.Equals("Capeverde") || computeDevice.Name.Equals("Hainan") || computeDevice.Name.Equals("Oland") || computeDevice.Name.Equals("Pitcairn") || computeDevice.Name.Equals("Tahiti");
 
-            string algorithmBuildParameters = $@" -I Miners\Kernel -DWORKSIZE={localWorkSizeA[0]}";
-            program = BuildProgram("cryptonight", localWorkSizeA[0], $"{algorithmBuildParameters} -O5" + (GCN1 ? " -legacy" : ""), algorithmBuildParameters, algorithmBuildParameters);
+            string programName = String.Empty;
+
+            if (_coin == null)
+            {
+                Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"Invalid coin! Device #{DeviceIndex} {_stratum.ActiveClient.Pool.CoinType}" });
+                Dispose();
+                return;
+            }
+
+            switch(_coin.Algorithm)
+            {
+                case Consts.Algorithm.CryptoNight:
+                case Consts.Algorithm.CryptoNightV7:
+                    programName = "cryptonight";
+                    scratchpadsBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite, ((long)1 << 21) * globalWorkSizeA[0]);
+                    break;
+                case Consts.Algorithm.CryptoNightHeavy:
+                    programName = "cryptonightHeavy";
+                    scratchpadsBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite, ((long)1 << 22) * globalWorkSizeA[0]);
+                    break;
+                case Consts.Algorithm.CryptoNightLite:
+                case Consts.Algorithm.CryptoNightLiteV1:
+                    programName = "cryptonightLite";
+                    scratchpadsBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite, ((long)1 << 20) * globalWorkSizeA[0]);
+                    break;
+            }
+
+            string algorithmBuildParameters = $@" -I Miners\Kernel -DWORKSIZE={localWorkSizeA[0]}  -DSTRIDED_INDEX=1 -DMEMORY_CHUNK_SIZE=2";
+            program = BuildProgram(programName, localWorkSizeA[0], $"{algorithmBuildParameters} -O5" + (GCN1 ? " -legacy" : ""), algorithmBuildParameters, algorithmBuildParameters);
 
             if (program == null)
             {
@@ -168,11 +201,26 @@ namespace SimpleCPUMiner.Miners
                                 startNonce = ((UInt32)localExtranonce << (8 * 3)) | (UInt32)(r.Next(0, int.MaxValue) & (0x00ffffffu));
                             }
 
-                            var coin = Consts.Coins.Where(x => x.CoinType == _stratum.ActiveClient.Pool.CoinType).FirstOrDefault();
-                            if (coin!= null && coin.Algorithm == Consts.Algorithm.CryptoNight)
+                            if ((_stratum.ActiveClient.Pool.Algorithm!=null && (_stratum.ActiveClient.Pool.Algorithm == Consts.Algorithm.CryptoNight || _stratum.ActiveClient.Pool.Algorithm == Consts.Algorithm.CryptoNightLite))
+                                ||(_stratum.ActiveClient.Pool.Algorithm == null && (_coin.Algorithm == Consts.Algorithm.CryptoNight
+                                || _coin.Algorithm == Consts.Algorithm.CryptoNightLite)))
+                            {
+                                searchKernel0.SetValueArgument<uint>(3, 0);
                                 searchKernel1.SetValueArgument<uint>(3, 0);
+                                searchKernel2.SetValueArgument<uint>(2, 0);
+                            }
+                            else if((_stratum.ActiveClient.Pool.Algorithm != null && _stratum.ActiveClient.Pool.Algorithm == Consts.Algorithm.CryptoNightLiteV1) || (_stratum.ActiveClient.Pool.Algorithm == null && _coin.Algorithm == Consts.Algorithm.CryptoNightLiteV1))
+                            {
+                                searchKernel0.SetValueArgument<uint>(3, 7);
+                                searchKernel1.SetValueArgument<uint>(3, 7);
+                                searchKernel2.SetValueArgument<uint>(2, 7);
+                            }
                             else
+                            {
+                                searchKernel0.SetValueArgument<uint>(3, (uint)job.Variant);
                                 searchKernel1.SetValueArgument<uint>(3, (uint)job.Variant);
+                                searchKernel2.SetValueArgument<uint>(2, (uint)job.Variant);
+                            }
 
                             searchKernel3.SetValueArgument<UInt32>(2, job.Target);
 
@@ -215,7 +263,7 @@ namespace SimpleCPUMiner.Miners
                                 if (Stopped)
                                     break;
                                 Queue.Execute(searchKernel3, globalWorkOffsetB, globalWorkSizeB, localWorkSizeB, null);
-                                Queue.Finish(); // Run the above statement before leaving the current local scope.
+                                Queue.Finish();
                                 if (Stopped)
                                     break;
 

@@ -465,12 +465,15 @@ namespace SimpleCPUMiner.ViewModel
                     Password = SelectedPool.Password,
                     Port = SelectedPool.Port,
                     URL = SelectedPool.URL,
-                    Username = SelectedPool.Username
-                }
+                    Username = SelectedPool.Username,
+                    Algorithm = SelectedPool.Algorithm
+                },
+                
             };
 
             poolVM.UpdatePoolList = SavePools;
             poolVM.UpdateCoinType();
+            poolVM.SelectedAlgo = SelectedPool.Algorithm != null ? SelectedPool.Algorithm : Consts.Coins.Where(x => x.CoinType == SelectedPool.CoinType).FirstOrDefault().Algorithm;
             poolSettingWindow.DataContext = poolVM;
             poolSettingWindow.ShowDialog();
         }
@@ -498,6 +501,7 @@ namespace SimpleCPUMiner.ViewModel
                 SelectedPool.Password = String.IsNullOrEmpty(ps.Password)?String.Empty:ps.Password.Trim();
                 SelectedPool.Port = ps.Port;
                 SelectedPool.Username = ps.Username.Trim();
+                SelectedPool.Algorithm = ps.Algorithm;
             }
 
             var poolzToSave = Pools.ToList();

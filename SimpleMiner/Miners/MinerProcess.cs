@@ -42,9 +42,13 @@ namespace SimpleCPUMiner.Miners
                         mehetAMenet = false;
                     }
 
-                    _pools.AddRange(pools.OrderByDescending(y => y.IsMain).ThenBy(y => y.FailOverPriority));
+                    _pools.AddRange(pools.Where(x => x.CoinType == main.CoinType).OrderByDescending(y => y.IsMain).ThenBy(y => y.FailOverPriority));
                     _pools.Where(x => string.IsNullOrEmpty(x.Username) && !x.IsMain).ToList().ForEach(x => Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"WARNING: Wallet empty for failover pool: {x.URL}:{x.Port}", IsError = true }));
                     _pools.ForEach(x => Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"Pool added to miner: {x.URL}:{x.Port}, Main:{x.IsMain}, Failover order: {x.FailOverPriority}" }) );
+
+                    if (_pools.Count != pools.Count)
+                        Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"WARNING: One ore more failover pool are ignored, because the algorithm is not the same as the main pool.", IsError = true });
+
                     break;
             }
 
@@ -175,9 +179,14 @@ namespace SimpleCPUMiner.Miners
             {
                 var coin = Consts.Coins.Where(x => x.CoinType == mainPool.CoinType).FirstOrDefault();
                 sb.Append($" -o {mainPool.URL}:{mainPool.Port} -u {mainPool.Username} -p {mainPool.Password}");
-                if (coin != null && coin.Algorithm == Consts.Algorithm.CryptoNight)
+                if ((mainPool.Algorithm != null && mainPool.Algorithm == Consts.Algorithm.CryptoNight) || (mainPool.Algorithm == null && coin != null && coin.Algorithm == Consts.Algorithm.CryptoNight))
                     sb.Append(" --variant 0");
-                    
+                else if ((mainPool.Algorithm != null && mainPool.Algorithm == Consts.Algorithm.CryptoNightLite) || (mainPool.Algorithm == null && coin != null && coin.Algorithm == Consts.Algorithm.CryptoNightLite))
+                    sb.Append(" --variant 0 --algo=cryptonight-lite");
+                else if ((mainPool.Algorithm != null && mainPool.Algorithm == Consts.Algorithm.CryptoNightLiteV1) || (mainPool.Algorithm == null && coin != null && coin.Algorithm == Consts.Algorithm.CryptoNightLiteV1))
+                    sb.Append(" --variant 1 --algo=cryptonight-lite");
+                else if ((mainPool.Algorithm != null && mainPool.Algorithm == Consts.Algorithm.CryptoNightHeavy) || (mainPool.Algorithm == null && coin != null && coin.Algorithm == Consts.Algorithm.CryptoNightHeavy))
+                    sb.Append(" --algo=cryptonight-heavy");
             }
 
             sb.Append(" -k");
@@ -188,8 +197,14 @@ namespace SimpleCPUMiner.Miners
                     continue;
                 var coin = Consts.Coins.Where(x => x.CoinType == mainPool.CoinType).FirstOrDefault();
                 sb.Append($" -o {item.URL}:{item.Port} -u {item.Username} -p {item.Password}");
-                if (coin != null && coin.Algorithm == Consts.Algorithm.CryptoNight)
+                if ((item.Algorithm != null && item.Algorithm == Consts.Algorithm.CryptoNight) || (item.Algorithm == null && coin != null && coin.Algorithm == Consts.Algorithm.CryptoNight))
                     sb.Append(" --variant 0");
+                else if ((item.Algorithm != null && item.Algorithm == Consts.Algorithm.CryptoNightLite) || (item.Algorithm == null && coin != null && coin.Algorithm == Consts.Algorithm.CryptoNightLite))
+                    sb.Append(" --variant 0 --algo=cryptonight-lite");
+                else if ((item.Algorithm != null && item.Algorithm == Consts.Algorithm.CryptoNightLiteV1) || (item.Algorithm == null && coin != null && coin.Algorithm == Consts.Algorithm.CryptoNightLiteV1))
+                    sb.Append(" --variant 1 --algo=cryptonight-lite");
+                else if ((item.Algorithm != null && item.Algorithm == Consts.Algorithm.CryptoNightHeavy) || (item.Algorithm == null && coin != null && coin.Algorithm == Consts.Algorithm.CryptoNightHeavy))
+                    sb.Append(" --algo=cryptonight-heavy");
             }
 
             sb.Append((Settings.NumberOfThreads.Equals("0") || Settings.NumberOfThreads.Equals("")) ? "" : $" -t {Settings.NumberOfThreads}");

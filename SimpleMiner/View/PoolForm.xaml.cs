@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SimpleCPUMiner.ViewModel;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -35,11 +36,15 @@ namespace SimpleCPUMiner.View
         {
             cbFailOver.IsChecked = false;
             tbOrder.Text = "0";
+            var vm = DataContext as PoolFormViewModel;
+            vm.RefreshUI();
         }
 
         private void cbFailOver_Checked(object sender, RoutedEventArgs e)
         {
             cbMain.IsChecked = false;
+            var vm = DataContext as PoolFormViewModel;
+            vm.RefreshUI();
         }
     }
 }

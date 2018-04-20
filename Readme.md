@@ -7,6 +7,16 @@ Our program based on XMRig miner.
 
 VERSION HISTORY
 ---------------
+v2.0.5.0 (2018/04/20)
+Improvements:
+ - Cryptonight-Heavy support
+ - Cryptonight-Lite support
+ - Algorithm selection ability for each pool
+
+v2.0.4.1 (2018/04/14)
+Improvements:
+ - Graft hardfork support
+
 v2.0.4.0 (2018/04/11)
 Improvements:
  - User interface branding

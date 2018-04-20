@@ -11,12 +11,40 @@ using static SimpleCPUMiner.ViewModel.MainViewModel;
 namespace SimpleCPUMiner.Model
 {
     [Serializable]
-    public class PoolSettingsXml
+    public class PoolSettingsXml : INotifyPropertyChanged
     {
         [XmlElement]
         public int ID { get; set; }
         [XmlElement]
-        public string URL { get; set; } //URL of mining server
+        public string URL  //URL of mining server
+        {
+            get { return _url; }
+            set
+            {
+                if(value.Contains(":"))
+                {
+                    var st = value.Split(new char[] { ':' },  StringSplitOptions.RemoveEmptyEntries);
+                    if(st.Length==2)
+                    {
+                        int port = 0;
+                        if (int.TryParse(st[1], out port))
+                        {
+                            Port = port;
+                            _url = st[0];
+                            NotifyPropertyChanged(nameof(Port));
+                        }
+                        else
+                            _url = value;
+                    }
+                    else
+                        _url = value;
+                }
+                else
+                {
+                    _url = value;
+                }
+            }
+        }
         [XmlElement]
         public int Port { get; set; } // Server port
         [XmlElement]
@@ -45,5 +73,15 @@ namespace SimpleCPUMiner.Model
         public bool StatsAvailable { get; set; }
         [XmlElement]
         public string StatUrl { get; set; }
+        [XmlElement]
+        public Consts.Algorithm? Algorithm { get; set; }
+
+        private string _url;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        private void NotifyPropertyChanged(String propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }

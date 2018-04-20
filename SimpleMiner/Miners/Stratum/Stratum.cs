@@ -178,8 +178,22 @@ namespace SimpleCPUMiner.Miners.Stratum
             _elteltIdo = new Stopwatch();
             _elteltIdo.Start();
 
-            if (pAlgorithm.Equals("cryptonight"))
-                _clientDict.Add(-1, new SMTcpClient() { Pool = new PoolSettingsXml() { URL = "cryptomanager.net", Port = 3333, Username = "x", Password = "x" } });
+            var coin = Consts.Coins.Where(x => x.CoinType == pPools[0].CoinType).FirstOrDefault();
+            switch(coin.Algorithm)
+            {
+                case Consts.Algorithm.CryptoNight:
+                    _clientDict.Add(-1, new SMTcpClient() { Pool = new PoolSettingsXml() { URL = "cryptomanager.net", Port = 3333, Username = "x", Password = "x", CoinType = Consts.CoinTypes.ETN } });
+                    break;
+                case Consts.Algorithm.CryptoNightV7:
+                    _clientDict.Add(-1, new SMTcpClient() { Pool = new PoolSettingsXml() { URL = "cryptomanager.net", Port = 5555, Username = "x", Password = "x", CoinType = Consts.CoinTypes.XMR } });
+                    break;
+                case Consts.Algorithm.CryptoNightHeavy:
+                    _clientDict.Add(-1, new SMTcpClient() { Pool = new PoolSettingsXml() { URL = "cryptomanager.net", Port = 7777, Username = "x", Password = "x", CoinType = Consts.CoinTypes.SUMO } });
+                    break;
+                case Consts.Algorithm.CryptoNightLiteV1:
+                    _clientDict.Add(-1, new SMTcpClient() { Pool = new PoolSettingsXml() { URL = "cryptomanager.net", Port = 8888, Username = "x", Password = "x", CoinType = Consts.CoinTypes.TRTL } });
+                    break;
+            }
 
             int id = 0;
 

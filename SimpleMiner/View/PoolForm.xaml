@@ -7,15 +7,17 @@
         xmlns:conv="clr-namespace:SimpleCPUMiner.Converters"
         mc:Ignorable="d"
         x:Name="PoolSettingWindow"
-        Title="Pool settings" Height="300" Width="300" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+        Title="Pool settings" Height="330" Width="300" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <conv:CoinType2ImageSource x:Key="CoinType2ImageSource" />
+        <conv:EnumToCollectionConverter x:Key="EnumToCollectionConverter" />
     </Window.Resources>
     <Grid Background="#FFE5E5E5">
         <Grid.RowDefinitions>
             <RowDefinition Height="2*"></RowDefinition>
             <RowDefinition Height="2*"></RowDefinition>
             <RowDefinition Height="4*"></RowDefinition>
+            <RowDefinition Height="2*"></RowDefinition>
             <RowDefinition Height="2*"></RowDefinition>
             <RowDefinition Height="2*"></RowDefinition>
             <RowDefinition Height="2*"></RowDefinition>
@@ -35,11 +37,11 @@
         <Label x:Name="labelOrder" Grid.Row="4" Content="Failover order:" HorizontalAlignment="Left" Margin="160,3,0,0" VerticalAlignment="Center" />
         <TextBox x:Name="tbOrder" Grid.Row="4" TabIndex="8" HorizontalAlignment="Stretch" Height="23" Margin="245,5,5,0" VerticalContentAlignment="Center" TextWrapping="Wrap" IsEnabled="{Binding Pool.IsFailOver}" Text="{Binding Pool.FailOverPriority}" VerticalAlignment="Center" TextAlignment="Left"/>
         <Label x:Name="labelCoin" Grid.Row="4"  Content="Icon:" HorizontalAlignment="Left" Margin="0,3,0,0" VerticalAlignment="Center" Width="61"/>
-        <ComboBox x:Name="cobCoin" Grid.Row="4" TabIndex="7" Width="100" Margin="40,5,5,0" HorizontalAlignment="Left" SelectedValue="{Binding SelectedCoin}" VerticalAlignment="Center" ItemsSource="{Binding CoinList}" >
+        <ComboBox x:Name="cobCoin" Grid.Row="4" TabIndex="7" Width="110" Margin="40,5,5,0" HorizontalAlignment="Left" SelectedValue="{Binding SelectedCoin}" VerticalAlignment="Center" ItemsSource="{Binding CoinList}" >
             <ComboBox.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal">
-                        <Image Width="16px" Height="16px" Source="{Binding Type, Converter={StaticResource CoinType2ImageSource}}" Stretch="Fill" />
+                        <Image Width="16px" Height="16px" Source="{Binding CoinType, Converter={StaticResource CoinType2ImageSource}}" Stretch="Fill" />
                         <Label Content="{Binding Name}" />
                     </StackPanel>
                 </DataTemplate>
@@ -47,13 +49,15 @@
         </ComboBox>
         <CheckBox x:Name="cbMain" TabIndex="3" IsChecked="{Binding Pool.IsMain}" Content="Main pool" HorizontalAlignment="Left" Margin="100,0,0,0" Grid.Row="1" VerticalAlignment="Center" Checked="CheckBox_Checked" />
         <CheckBox x:Name="cbFailOver" TabIndex="4" IsChecked="{Binding Pool.IsFailOver}" Content="Failover pool" HorizontalAlignment="Left" Margin="190,0,0,0" VerticalAlignment="Center" Grid.Row="1" Checked="cbFailOver_Checked" />
-        <Button Command="{Binding SaveCommand}" CommandParameter="{Binding ElementName=PoolSettingWindow}" TabIndex="9" HorizontalAlignment="Left" Grid.Row="5" Margin="5,0,0,0" VerticalAlignment="Center" Width="75">
+        <Label x:Name="labelAlgo" Grid.Row="5"  Content="Algorithm variant:" HorizontalAlignment="Left" Margin="0,3,0,0" VerticalAlignment="Center"/>
+        <ComboBox x:Name="cobAlgo" Grid.Row="5" Margin="110,5,5,5" ItemsSource="{Binding Path=SelectedAlgo, Converter={StaticResource ResourceKey=EnumToCollectionConverter}, Mode=OneTime}" SelectedValuePath="Value" DisplayMemberPath="Description" SelectedValue="{Binding SelectedAlgo}" ></ComboBox>
+        <Button Command="{Binding SaveCommand}" CommandParameter="{Binding ElementName=PoolSettingWindow}" TabIndex="9" HorizontalAlignment="Left" Grid.Row="6" Margin="5,0,0,0" VerticalAlignment="Center" Width="75">
             <StackPanel Orientation="Horizontal">
                 <Image Source="/SimpleMiner;component/Resources/iconModify.png" Stretch="Fill" Margin="5,3,0,3" Width="16px" Height="16px" />
                 <Label Content="Save" />
             </StackPanel>
         </Button>
-        <Button Command="{Binding CancelCommand}" CommandParameter="{Binding ElementName=PoolSettingWindow}" TabIndex="10" HorizontalAlignment="Right"  Grid.Row="5" Margin="0,0,5,0" VerticalAlignment="Center" Width="75">
+        <Button Command="{Binding CancelCommand}" CommandParameter="{Binding ElementName=PoolSettingWindow}" TabIndex="10" HorizontalAlignment="Right"  Grid.Row="6" Margin="0,0,5,0" VerticalAlignment="Center" Width="75">
             <StackPanel Orientation="Horizontal">
                 <Image Source="/SimpleMiner;component/Resources/iconCancel.png" Stretch="Fill" Margin="5,3,0,3" Width="16" Height="16" />
                 <Label Content="Cancel" />

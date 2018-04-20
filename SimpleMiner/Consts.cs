@@ -1,6 +1,7 @@
 ﻿using SimpleCPUMiner.Model;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Reflection;
 
 namespace SimpleCPUMiner
@@ -74,7 +75,7 @@ namespace SimpleCPUMiner
 
             Coins.Add(new Coin
             {
-                Algorithm = Algorithm.CryptoNightLite,
+                Algorithm = Algorithm.CryptoNightLiteV1,
                 CoinType = CoinTypes.TRTL,
                 Icon = "coinTurtle.png",
                 Name = "TurtleCoin",
@@ -165,10 +166,16 @@ namespace SimpleCPUMiner
 
         public enum Algorithm
         {
+            [Description("CryptoNight")]
             CryptoNight,
-            CryptoNightLite, //Aeon
-            CryptoNightV7, //V7 pow
-            CryptoNightHeavy //Sumo
+            [Description("CryptoNight Lite")]
+            CryptoNightLite,
+            [Description("CryptoNight Lite V1")]
+            CryptoNightLiteV1,
+            [Description("CryptoNight V7")]
+            CryptoNightV7,
+            [Description("CryptoNight Heavy")]
+            CryptoNightHeavy 
         }
 
         public enum WindowsType

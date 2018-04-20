@@ -19,36 +19,32 @@ namespace SimpleCPUMiner.ViewModel
         public RelayCommand<Window> SaveCommand { get; private set; }
         public Action<PoolSettingsXml> AddPool;
         public Action<PoolSettingsXml> UpdatePoolList;
-        public List<Coinz> CoinList { get; set; }
-        public Coinz SelectedCoin { get; set; }
+        public List<Coin> CoinList { get; set; }
+        public Consts.Algorithm? SelectedAlgo { get; set; }
+        private Coin _selectedCoin;
 
-        public class Coinz
+        public Coin SelectedCoin
         {
-            public CoinTypes Type { get; set; }
-            public String Name { get; set; }          
+            get { return _selectedCoin; }
+            set { _selectedCoin = value; SelectedAlgo = SelectedCoin.Algorithm; RaisePropertyChanged(nameof(SelectedAlgo)); }
         }
 
         public PoolFormViewModel()
         {
             CancelCommand = new RelayCommand<Window>(Cancel);
             SaveCommand = new RelayCommand<Window>(Save);
-            CoinList = new List<Coinz>() {
-                new Coinz() { Name = "Other", Type = CoinTypes.OTHER },
-                new Coinz() { Name = "BCN", Type = CoinTypes.BCN },
-                new Coinz() { Name = "ETN", Type = CoinTypes.ETN },
-                new Coinz() { Name = "GRFT", Type = CoinTypes.GRFT },
-                new Coinz() { Name = "KRB", Type = CoinTypes.KRB },
-                new Coinz() { Name = "TRTL", Type = CoinTypes.TRTL },
-                new Coinz() { Name = "SUMO", Type = CoinTypes.SUMO },
-                new Coinz() { Name = "XMR", Type = CoinTypes.XMR },
-                new Coinz() { Name = "NiceHash", Type = CoinTypes.NiceHash }
-            };
+            CoinList = Consts.Coins;
+        }
 
+        public void RefreshUI()
+        {
+            RaisePropertyChanged(nameof(Pool));
         }
 
         private void Save(Window obj)
         {
-            Pool.CoinType = SelectedCoin.Type;
+            Pool.CoinType = SelectedCoin.CoinType;
+            Pool.Algorithm = SelectedAlgo;
             StringBuilder error = new StringBuilder();
 
             if (String.IsNullOrEmpty(Pool.URL))
@@ -101,7 +97,7 @@ namespace SimpleCPUMiner.ViewModel
 
         internal void UpdateCoinType()
         {
-            SelectedCoin = CoinList.Where(x => x.Type.Equals(Pool.CoinType)).FirstOrDefault();
+            SelectedCoin = CoinList.Where(x => x.CoinType.Equals(Pool.CoinType)).FirstOrDefault();
         }
     }
 }

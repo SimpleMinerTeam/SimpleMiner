@@ -84,21 +84,21 @@ namespace SimpleCPUMiner.Miners.Stratum
             {
                 mVariant = -1;
 
-                if (!String.IsNullOrWhiteSpace(variant))
-                {
-                    int result;
-                    if (Int32.TryParse(variant, out result))
-                    {
-                        if (result >= -1 && result <= 1)
-                        {
-                            mVariant = result;
-                        }
-                    }
-                }
+                //if (!String.IsNullOrWhiteSpace(variant))
+                //{
+                //    int result;
+                //    if (Int32.TryParse(variant, out result))
+                //    {
+                //        if (result >= -1 && result <= 1)
+                //        {
+                //            mVariant = result;
+                //        }
+                //    }
+                //}
 
                 if (mVariant == -1)
                 {
-                    mVariant = (mBlob[0] > 6 ? 1 : 0);
+                    mVariant = mBlob[0];
                 }
 
                 return true;
@@ -216,6 +216,7 @@ namespace SimpleCPUMiner.Miners.Stratum
                 Reconnect();
             }
             try { mMutex.ReleaseMutex(); } catch (Exception) { }
+            CheckHappening();
         }
 
         public new Work GetWork()

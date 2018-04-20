@@ -1,4 +1,6 @@
-﻿using SimpleCPUMiner.Model;
+﻿using GalaSoft.MvvmLight.Messaging;
+using SimpleCPUMiner.Messages;
+using SimpleCPUMiner.Model;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,42 +17,51 @@ namespace SimpleCPUMiner
         {
             List<PoolSettingsXml> poolList = null;
 
-            if (!File.Exists(Consts.PoolFilePath))
+            try
             {
-                if (File.Exists(Consts.PoolFilePathOld))
+                if (!File.Exists(Consts.PoolFilePath))
                 {
-                    //ilyenkor kell migrálnunk
-                    var poolzToLoad = Utils.DeSerializeObject<List<PoolSettings>>(Consts.PoolFilePathOld);
-                    if (poolzToLoad != null && poolzToLoad.Count > 0)
+                    if (File.Exists(Consts.PoolFilePathOld))
                     {
-                        poolList = new List<PoolSettingsXml>();
-                        foreach (var oldPool in poolzToLoad)
+                        //ilyenkor kell migrálnunk
+                        var poolzToLoad = Utils.DeSerializeObject<List<PoolSettings>>(Consts.PoolFilePathOld);
+                        if (poolzToLoad != null && poolzToLoad.Count > 0)
                         {
-                            poolList.Add(new PoolSettingsXml() {
-                                ID =  oldPool.ID,
-                                CoinType = oldPool.CoinType,
-                                FailOverPriority = oldPool.FailOverPriority,
-                                IsCPUPool = oldPool.IsCPUPool,
-                                IsGPUPool = oldPool.IsGPUPool,
-                                IsFailOver = oldPool.IsFailOver,
-                                IsMain = oldPool.IsMain,
-                                Password = oldPool.Password,
-                                Port = oldPool.Port,
-                                Name = oldPool.URL,
-                                URL = oldPool.URL,
-                                Username = oldPool.Username                                
-                            });
+                            poolList = new List<PoolSettingsXml>();
+                            foreach (var oldPool in poolzToLoad)
+                            {
+                                poolList.Add(new PoolSettingsXml()
+                                {
+                                    ID = oldPool.ID,
+                                    CoinType = oldPool.CoinType,
+                                    FailOverPriority = oldPool.FailOverPriority,
+                                    IsCPUPool = oldPool.IsCPUPool,
+                                    IsGPUPool = oldPool.IsGPUPool,
+                                    IsFailOver = oldPool.IsFailOver,
+                                    IsMain = oldPool.IsMain,
+                                    Password = oldPool.Password,
+                                    Port = oldPool.Port,
+                                    Name = oldPool.URL,
+                                    URL = oldPool.URL,
+                                    Username = oldPool.Username
+                                });
+                            }
                         }
+                    }
+                    else
+                    {
+                        poolList = setDefaultPool();
                     }
                 }
                 else
                 {
-                    poolList = setDefaultPool();
+                    poolList = LoadPools();
                 }
             }
-            else
+            catch(Exception ex)
             {
-                poolList = LoadPools();
+                Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"Failed to load pools, {ex.Message}{Environment.NewLine}{ex.InnerException}{Environment.NewLine}{ex.StackTrace}", IsError = true });
+                poolList = null;
             }
 
             if(poolList==null)

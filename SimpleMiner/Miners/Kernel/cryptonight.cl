@@ -15,36 +15,39 @@ uint amd_bfe(uint src0, uint src1, uint src2)
 #endif
 #define BYTE(x, y)	(amd_bfe((x), (y) << 3U, 8U))
 
+#if !defined(CRYPTONIGHT_HEAVY) && !defined(CRYPTONIGHT_LIGHT)
+#define MEMORY (2UL * 1024 * 1024)
+#define MASK 0x1FFFF0
+#define ITERATIONS 0x80000
+#endif
+
 #define VARIANT1_1(p) \
-    if (variant > 0) { \
+    if (variant > 6) { \
         uint table = 0x75310U; \
         uint index = (((p).s2 >> 26) & 12) | (((p).s2 >> 23) & 2); \
         (p).s2 ^= ((table >> index) & 0x30U) << 24; \
     }
 
 #define VARIANT1_2(p) \
-    if (variant > 0) { \
+    if (variant > 6) { \
         ((uint2 *)&(p))[0] ^= tweak1_2; \
     }
 
 #define VARIANT1_INIT() \
     uint2 tweak1_2; \
-    if (variant > 0) { \
+    if (variant > 6) { \
         tweak1_2 = as_uint2(input[4]); \
         tweak1_2.s0 >>= 24; \
         tweak1_2.s0 |= tweak1_2.s1 << 8; \
         tweak1_2.s1 = get_global_id(0); \
         tweak1_2 ^= as_uint2(states[24]); \
-    } 
-
+    }
 
 #include "wolf-aes.cl"
 #include "wolf-skein.cl"
 #include "jh.cl"
 #include "blake256.cl"
 #include "groestl256.cl"
-
-
 
 static const __constant ulong keccakf_rndc[24] =
 {
@@ -174,12 +177,6 @@ void keccakf1600_1(ulong *st)
             t = bc[0];
         }
 
-        //ulong tmp1 = st[0]; ulong tmp2 = st[1]; st[0] = bitselect(st[0] ^ st[2], st[0], st[1]); st[1] = bitselect(st[1] ^ st[3], st[1], st[2]); st[2] = bitselect(st[2] ^ st[4], st[2], st[3]); st[3] = bitselect(st[3] ^ tmp1, st[3], st[4]); st[4] = bitselect(st[4] ^ tmp2, st[4], tmp1);
-        //tmp1 = st[5]; tmp2 = st[6]; st[5] = bitselect(st[5] ^ st[7], st[5], st[6]); st[6] = bitselect(st[6] ^ st[8], st[6], st[7]); st[7] = bitselect(st[7] ^ st[9], st[7], st[8]); st[8] = bitselect(st[8] ^ tmp1, st[8], st[9]); st[9] = bitselect(st[9] ^ tmp2, st[9], tmp1);
-        //tmp1 = st[10]; tmp2 = st[11]; st[10] = bitselect(st[10] ^ st[12], st[10], st[11]); st[11] = bitselect(st[11] ^ st[13], st[11], st[12]); st[12] = bitselect(st[12] ^ st[14], st[12], st[13]); st[13] = bitselect(st[13] ^ tmp1, st[13], st[14]); st[14] = bitselect(st[14] ^ tmp2, st[14], tmp1);
-        //tmp1 = st[15]; tmp2 = st[16]; st[15] = bitselect(st[15] ^ st[17], st[15], st[16]); st[16] = bitselect(st[16] ^ st[18], st[16], st[17]); st[17] = bitselect(st[17] ^ st[19], st[17], st[18]); st[18] = bitselect(st[18] ^ tmp1, st[18], st[19]); st[19] = bitselect(st[19] ^ tmp2, st[19], tmp1);
-        //tmp1 = st[20]; tmp2 = st[21]; st[20] = bitselect(st[20] ^ st[22], st[20], st[21]); st[21] = bitselect(st[21] ^ st[23], st[21], st[22]); st[22] = bitselect(st[22] ^ st[24], st[22], st[23]); st[23] = bitselect(st[23] ^ tmp1, st[23], st[24]); st[24] = bitselect(st[24] ^ tmp2, st[24], tmp1);
-
 #pragma unroll 1
         for (int i = 0; i < 25; i += 5)
         {
@@ -206,26 +203,6 @@ void keccakf1600_2(ulong *st)
 #pragma unroll 1
     for (round = 0; round < 24; ++round)
     {
-
-        // Theta
-        //bc[0] = st[0] ^ st[5] ^ st[10] ^ st[15] ^ st[20];
-        //bc[1] = st[1] ^ st[6] ^ st[11] ^ st[16] ^ st[21];
-        //bc[2] = st[2] ^ st[7] ^ st[12] ^ st[17] ^ st[22];
-        //bc[3] = st[3] ^ st[8] ^ st[13] ^ st[18] ^ st[23];
-        //bc[4] = st[4] ^ st[9] ^ st[14] ^ st[19] ^ st[24];
-
-        /*
-        #pragma unroll
-        for (i = 0; i < 5; ++i) {
-            t = bc[(i + 4) % 5] ^ rotate(bc[(i + 1) % 5], 1UL);
-            st[i     ] ^= t;
-            st[i +  5] ^= t;
-            st[i + 10] ^= t;
-            st[i + 15] ^= t;
-            st[i + 20] ^= t;
-        }
-        */
-
         bc[0] = st[0] ^ st[5] ^ st[10] ^ st[15] ^ st[20] ^ rotate(st[2] ^ st[7] ^ st[12] ^ st[17] ^ st[22], 1UL);
         bc[1] = st[1] ^ st[6] ^ st[11] ^ st[16] ^ st[21] ^ rotate(st[3] ^ st[8] ^ st[13] ^ st[18] ^ st[23], 1UL);
         bc[2] = st[2] ^ st[7] ^ st[12] ^ st[17] ^ st[22] ^ rotate(st[4] ^ st[9] ^ st[14] ^ st[19] ^ st[24], 1UL);
@@ -271,44 +248,6 @@ void keccakf1600_2(ulong *st)
             t = bc[0];
         }
 
-
-
-        /*ulong tmp1 = st[1] ^ bc[0];
-
-        st[0] ^= bc[4];
-        st[1] = rotate(st[6] ^ bc[0], 44UL);
-        st[6] = rotate(st[9] ^ bc[3], 20UL);
-        st[9] = rotate(st[22] ^ bc[1], 61UL);
-        st[22] = rotate(st[14] ^ bc[3], 39UL);
-        st[14] = rotate(st[20] ^ bc[4], 18UL);
-        st[20] = rotate(st[2] ^ bc[1], 62UL);
-        st[2] = rotate(st[12] ^ bc[1], 43UL);
-        st[12] = rotate(st[13] ^ bc[2], 25UL);
-        st[13] = rotate(st[19] ^ bc[3], 8UL);
-        st[19] = rotate(st[23] ^ bc[2], 56UL);
-        st[23] = rotate(st[15] ^ bc[4], 41UL);
-        st[15] = rotate(st[4] ^ bc[3], 27UL);
-        st[4] = rotate(st[24] ^ bc[3], 14UL);
-        st[24] = rotate(st[21] ^ bc[0], 2UL);
-        st[21] = rotate(st[8] ^ bc[2], 55UL);
-        st[8] = rotate(st[16] ^ bc[0], 35UL);
-        st[16] = rotate(st[5] ^ bc[4], 36UL);
-        st[5] = rotate(st[3] ^ bc[2], 28UL);
-        st[3] = rotate(st[18] ^ bc[2], 21UL);
-        st[18] = rotate(st[17] ^ bc[1], 15UL);
-        st[17] = rotate(st[11] ^ bc[0], 10UL);
-        st[11] = rotate(st[7] ^ bc[1], 6UL);
-        st[7] = rotate(st[10] ^ bc[4], 3UL);
-        st[10] = rotate(tmp1, 1UL);
-        */
-
-
-        //ulong tmp1 = st[0]; ulong tmp2 = st[1]; st[0] = bitselect(st[0] ^ st[2], st[0], st[1]); st[1] = bitselect(st[1] ^ st[3], st[1], st[2]); st[2] = bitselect(st[2] ^ st[4], st[2], st[3]); st[3] = bitselect(st[3] ^ tmp1, st[3], st[4]); st[4] = bitselect(st[4] ^ tmp2, st[4], tmp1);
-        //tmp1 = st[5]; tmp2 = st[6]; st[5] = bitselect(st[5] ^ st[7], st[5], st[6]); st[6] = bitselect(st[6] ^ st[8], st[6], st[7]); st[7] = bitselect(st[7] ^ st[9], st[7], st[8]); st[8] = bitselect(st[8] ^ tmp1, st[8], st[9]); st[9] = bitselect(st[9] ^ tmp2, st[9], tmp1);
-        //tmp1 = st[10]; tmp2 = st[11]; st[10] = bitselect(st[10] ^ st[12], st[10], st[11]); st[11] = bitselect(st[11] ^ st[13], st[11], st[12]); st[12] = bitselect(st[12] ^ st[14], st[12], st[13]); st[13] = bitselect(st[13] ^ tmp1, st[13], st[14]); st[14] = bitselect(st[14] ^ tmp2, st[14], tmp1);
-        //tmp1 = st[15]; tmp2 = st[16]; st[15] = bitselect(st[15] ^ st[17], st[15], st[16]); st[16] = bitselect(st[16] ^ st[18], st[16], st[17]); st[17] = bitselect(st[17] ^ st[19], st[17], st[18]); st[18] = bitselect(st[18] ^ tmp1, st[18], st[19]); st[19] = bitselect(st[19] ^ tmp2, st[19], tmp1);
-        //tmp1 = st[20]; tmp2 = st[21]; st[20] = bitselect(st[20] ^ st[22], st[20], st[21]); st[21] = bitselect(st[21] ^ st[23], st[21], st[22]); st[22] = bitselect(st[22] ^ st[24], st[22], st[23]); st[23] = bitselect(st[23] ^ tmp1, st[23], st[24]); st[24] = bitselect(st[24] ^ tmp2, st[24], tmp1);
-
 #pragma unroll
         for (int i = 0; i < 25; i += 5)
         {
@@ -332,11 +271,8 @@ void CNKeccak(ulong *output, ulong *input)
 
     // Copy 72 bytes
     for (int i = 0; i < 9; ++i) st[i] = input[i];
-
-    // Last four and '1' bit for padding
-    //st[9] = as_ulong((uint2)(((uint *)input)[18], 0x00000001U));
-
-    st[9] = (input[9] & 0x00000000FFFFFFFFUL) | 0x0000000100000000UL;
+    
+	st[9] = (input[9] & 0x00000000FFFFFFFFUL) | 0x0000000100000000UL;
 
     for (int i = 10; i < 25; ++i) st[i] = 0x00UL;
 
@@ -367,27 +303,59 @@ void AESExpandKey256(uint *keybuf)
     }
 }
 
-#define IDX(x)	((x) * (get_global_size(0)))
+#ifndef STRIDED_INDEX
+#define STRIDED_INDEX 1
+#endif
+
+#ifndef MEMORY_CHUNK_SIZE
+#define MEMORY_CHUNK_SIZE 1
+#endif
+
+#define MEM_CHUNK (1 << MEMORY_CHUNK_SIZE)
+
+#ifndef STATE_SIZE
+#define STATE_SIZE 25
+#endif
+
+#if(STRIDED_INDEX==0)
+#   define IDX(x)	(x)
+#elif(STRIDED_INDEX==1)
+#   define IDX(x)	((x) * get_global_size(0))
+#elif(STRIDED_INDEX==2)
+#   define IDX(x)	(((x) % MEM_CHUNK) + ((x) / MEM_CHUNK) * WORKSIZE * MEM_CHUNK)
+#endif
 
 __attribute__((reqd_work_group_size(WORKSIZE, 8, 1)))
-__kernel void search(__global ulong *input, __global uint4 *Scratchpad, __global ulong *states)
+__kernel void search(__global ulong *input, __global uint4 *Scratchpad, __global ulong *states, const uint variant)
 {
-    ulong State[25];
+    ulong State[STATE_SIZE];
     uint ExpandedKey1[256];
     __local uint AES0[256], AES1[256], AES2[256], AES3[256];
     uint4 text;
 
-    states += (25 * (get_global_id(0) - get_global_offset(0)));
-    Scratchpad += ((get_global_id(0) - get_global_offset(0)));
+    const ulong gIdx = get_global_id(0) - get_global_offset(0);
 
-    for (int i = get_local_id(0); i < 256; i += WORKSIZE)
-    {
+    for (int i = get_local_id(1) * WORKSIZE + get_local_id(0);
+         i < 256;
+         i += WORKSIZE * 8) {
         const uint tmp = AES0_C[i];
         AES0[i] = tmp;
         AES1[i] = rotate(tmp, 8U);
         AES2[i] = rotate(tmp, 16U);
         AES3[i] = rotate(tmp, 24U);
     }
+
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+    if (gIdx < get_global_size(0)) {
+        states += (STATE_SIZE * gIdx);
+#if(STRIDED_INDEX==0)
+        Scratchpad += gIdx * (MEMORY >> 4);
+#elif(STRIDED_INDEX==1)
+        Scratchpad += gIdx;
+#elif(STRIDED_INDEX==2)
+        Scratchpad += get_group_id(0) * (MEMORY >> 4) * WORKSIZE + MEM_CHUNK * get_local_id(0);
+#endif
 
     ((ulong8 *)State)[0] = vload8(0, input);
     State[8] = input[8];
@@ -405,9 +373,11 @@ __kernel void search(__global ulong *input, __global uint4 *Scratchpad, __global
     State[16] = 0x8000000000000000UL;
 
     keccakf1600_2(State);
+    }
 
     mem_fence(CLK_GLOBAL_MEM_FENCE);
 
+    if (gIdx < get_global_size(0)) {
 #pragma unroll
     for (int i = 0; i < 25; ++i) states[i] = State[i];
 
@@ -417,39 +387,73 @@ __kernel void search(__global ulong *input, __global uint4 *Scratchpad, __global
     for (int i = 0; i < 4; ++i) ((ulong *)ExpandedKey1)[i] = states[i];
 
     AESExpandKey256(ExpandedKey1);
+    }
 
     mem_fence(CLK_LOCAL_MEM_FENCE);
 
-#pragma unroll 2
-    for (int i = 0; i < 0x4000; ++i)
-    {
+#ifdef CRYPTONIGHT_HEAVY
+    if (variant >= 3) {
+        __local uint4 xin[8][WORKSIZE];
+        /* Also left over threads performe this loop.
+        * The left over thread results will be ignored
+        */
+        for (size_t i = 0; i < 16; i++) {
 #pragma unroll
         for (int j = 0; j < 10; ++j)
             text = AES_Round(AES0, AES1, AES2, AES3, text, ((uint4 *)ExpandedKey1)[j]);
-
-        Scratchpad[IDX((i << 3) + get_local_id(1))] = text;
+            barrier(CLK_LOCAL_MEM_FENCE);
+            xin[get_local_id(1)][get_local_id(0)] = text;
+            barrier(CLK_LOCAL_MEM_FENCE);
+            text = mix_and_propagate(xin);
+        }
     }
+#endif
 
+    if (gIdx < get_global_size(0)) {
+        int iterations = MEMORY >> 7;
+#ifdef CRYPTONIGHT_HEAVY
+        if (variant < 3)
+            iterations >>= 1;
+#endif
+#pragma unroll 2
+        for (int i = 0; i < iterations; ++i) {
+#pragma unroll 10
+            for (int j = 0; j < 10; ++j)
+                text = AES_Round(AES0, AES1, AES2, AES3, text, ((uint4 *)ExpandedKey1)[j]);
+			Scratchpad[IDX((i << 3) + get_local_id(1))] = text;
+		}
+    }
     mem_fence(CLK_GLOBAL_MEM_FENCE);
 }
 
 __attribute__((reqd_work_group_size(WORKSIZE, 1, 1)))
-__kernel void search1(__global uint4 *Scratchpad, __global ulong *states, __global int *terminate, uint variant, __global ulong *input)
+__kernel void search1(__global uint4 *Scratchpad, __global ulong *states, __global int *terminate, const uint variant, __global ulong *input)
 {
     ulong a[2], b[2];
     __local uint AES0[256], AES1[256], AES2[256], AES3[256];
 
-    Scratchpad += ((get_global_id(0) - get_global_offset(0)));
-    states += (25 * (get_global_id(0) - get_global_offset(0)));
+    const ulong gIdx = get_global_id(0) - get_global_offset(0);
 
-    for (int i = get_local_id(0); i < 256; i += WORKSIZE)
-    {
+    for (int i = get_local_id(0); i < 256; i += WORKSIZE) {
         const uint tmp = AES0_C[i];
         AES0[i] = tmp;
         AES1[i] = rotate(tmp, 8U);
         AES2[i] = rotate(tmp, 16U);
         AES3[i] = rotate(tmp, 24U);
     }
+
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+    if (gIdx < get_global_size(0)) 
+	{
+        states += (STATE_SIZE * gIdx);
+	#if(STRIDED_INDEX==0)
+			Scratchpad += gIdx * (MEMORY >> 4);
+	#elif(STRIDED_INDEX==1)
+			Scratchpad += gIdx;
+	#elif(STRIDED_INDEX==2)
+			Scratchpad += get_group_id(0) * (MEMORY >> 4) * WORKSIZE + MEM_CHUNK * get_local_id(0);
+	#endif
 
     a[0] = states[0] ^ states[4];
     b[0] = states[2] ^ states[6];
@@ -460,55 +464,91 @@ __kernel void search1(__global uint4 *Scratchpad, __global ulong *states, __glob
 
     mem_fence(CLK_LOCAL_MEM_FENCE);
 
+	#ifndef CRYPTONIGHT_HEAVY
 	VARIANT1_INIT();
+	#endif
 
+    if (gIdx < get_global_size(0)) 
+	{
+        ulong idx0 = a[0];
+        ulong mask = MASK;
+        int iterations = ITERATIONS;
+
+#ifdef CRYPTONIGHT_HEAVY
+        if (variant < 3) {
+            iterations <<= 1;
+            mask -= 0x200000;
+        }
+#endif
 #pragma unroll 8
-    for (int i = 0; i < 0x80000; ++i)
-    {
-		if (i % 0x1000 == 0 && atomic_add(terminate, 0))
-			return;
+		for (int i = 0; i < iterations; ++i)
+		{
+			if (i % 0x1000 == 0 && atomic_add(terminate, 0))
+				return;
 
-        ulong c[2];
+			ulong c[2];
 
-        ((uint4 *)c)[0] = Scratchpad[IDX((a[0] & 0x1FFFF0) >> 4)];
-        ((uint4 *)c)[0] = AES_Round(AES0, AES1, AES2, AES3, ((uint4 *)c)[0], ((uint4 *)a)[0]);
-        //b_x ^= ((uint4 *)c)[0];
+			((uint4 *)c)[0] = Scratchpad[IDX((idx0 & mask) >> 4)];
+			((uint4 *)c)[0] = AES_Round(AES0, AES1, AES2, AES3, ((uint4 *)c)[0], ((uint4 *)a)[0]);
 		
-		b_x ^= ((uint4 *)c)[0];
-		VARIANT1_1(b_x);
+			b_x ^= ((uint4 *)c)[0];
+		
+			#ifndef CRYPTONIGHT_HEAVY
+			VARIANT1_1(b_x);
+			#endif
 
-		Scratchpad[IDX((a[0] & 0x1FFFF0) >> 4)] = b_x;
+			Scratchpad[IDX((idx0 & mask) >> 4)] = b_x;
 
-        // Scratchpad[IDX((a[0] & 0x1FFFF0) >> 4)] = b_x ^ ((uint4 *)c)[0];
+			uint4 tmp;
+			tmp = Scratchpad[IDX((c[0] & mask) >> 4)];
 
-        uint4 tmp;
-        tmp = Scratchpad[IDX((c[0] & 0x1FFFF0) >> 4)];
+			a[1] += c[0] * as_ulong2(tmp).s0;
+			a[0] += mul_hi(c[0], as_ulong2(tmp).s0);
 
-        a[1] += c[0] * as_ulong2(tmp).s0;
-        a[0] += mul_hi(c[0], as_ulong2(tmp).s0);
+			#ifndef CRYPTONIGHT_HEAVY
+			VARIANT1_2(a[1]);
+			#endif
+        
+			Scratchpad[IDX((c[0] & mask) >> 4)] = ((uint4 *)a)[0];
 
-		VARIANT1_2(a[1]);
-        Scratchpad[IDX((c[0] & 0x1FFFF0) >> 4)] = ((uint4 *)a)[0];
-		VARIANT1_2(a[1]);
+			#ifndef CRYPTONIGHT_HEAVY
+			VARIANT1_2(a[1]);
+			#endif
 
-        ((uint4 *)a)[0] ^= tmp;
+			((uint4 *)a)[0] ^= tmp;
+			idx0 = a[0];
 
-        b_x = ((uint4 *)c)[0];
+			b_x = ((uint4 *)c)[0];
+
+			#ifdef CRYPTONIGHT_HEAVY
+			if (variant >= 3) 
+			{
+				long n = *((__global long*)(Scratchpad + (IDX((idx0 & mask) >> 4))));
+				int d = ((__global int*)(Scratchpad + (IDX((idx0 & mask) >> 4))))[2];
+				long q = n / (d | 0x5);
+				*((__global long*)(Scratchpad + (IDX((idx0 & mask) >> 4)))) = n ^ q;
+				idx0 = d ^ q;
+			}
+			#endif
+		}
     }
+    mem_fence(CLK_GLOBAL_MEM_FENCE);
+}
 }
 
 __attribute__((reqd_work_group_size(WORKSIZE, 8, 1)))
-__kernel void search2(__global uint4 *Scratchpad, __global ulong *states)
+__kernel void search2(__global uint4 *Scratchpad, __global ulong *states, const uint variant)
 {
     __local uint AES0[256], AES1[256], AES2[256], AES3[256];
     uint ExpandedKey2[256];
-    ulong State[25];
+    ulong State[STATE_SIZE];
     uint4 text;
 
-    Scratchpad += ((get_global_id(0) - get_global_offset(0)));
-    states += (25 * (get_global_id(0) - get_global_offset(0)));
+    const ulong gIdx = get_global_id(0) - get_global_offset(0);
 
-    for (int i = get_local_id(0); i < 256; i += WORKSIZE)
+	for(int i = get_local_id(1) * WORKSIZE + get_local_id(0);
+		i < 256;
+		i += WORKSIZE * 8)
     {
         const uint tmp = AES0_C[i];
         AES0[i] = tmp;
@@ -516,6 +556,18 @@ __kernel void search2(__global uint4 *Scratchpad, __global ulong *states)
         AES2[i] = rotate(tmp, 16U);
         AES3[i] = rotate(tmp, 24U);
     }
+
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+    if (gIdx < get_global_size(0)) {
+        states += (STATE_SIZE * gIdx);
+#if(STRIDED_INDEX==0)
+        Scratchpad += gIdx * (MEMORY >> 4);
+#elif(STRIDED_INDEX==1)
+        Scratchpad += gIdx;
+#elif(STRIDED_INDEX==2)
+        Scratchpad += get_group_id(0) * (MEMORY >> 4) * WORKSIZE + MEM_CHUNK * get_local_id(0);
+#endif
 
 #if defined(__Tahiti__) || defined(__Pitcairn__)
 
@@ -530,25 +582,90 @@ __kernel void search2(__global uint4 *Scratchpad, __global ulong *states)
 #endif
 
     AESExpandKey256(ExpandedKey2);
+    }
 
     barrier(CLK_LOCAL_MEM_FENCE);
 
+#ifdef CRYPTONIGHT_HEAVY
+    __local uint4 xin[8][WORKSIZE];
+#endif
+
+    if (gIdx < get_global_size(0)) {
+        int iterations = MEMORY >> 7;
+#ifdef CRYPTONIGHT_HEAVY
+        if (variant < 3) {
+            iterations >>= 1;
+
 #pragma unroll 2
-    for (int i = 0; i < 0x4000; ++i)
+    for (int i = 0; i < iterations; ++i)
     {
         text ^= Scratchpad[IDX((i << 3) + get_local_id(1))];
 
-#pragma unroll
+#pragma unroll 10
         for (int j = 0; j < 10; ++j)
             text = AES_Round(AES0, AES1, AES2, AES3, text, ((uint4 *)ExpandedKey2)[j]);
     }
 
+} else {
+#pragma unroll 2
+            for (int i = 0; i < iterations; ++i) {
+                text ^= Scratchpad[IDX((i << 3) + get_local_id(1))];
+#pragma unroll 10
+                for (int j = 0; j < 10; ++j)
+                    text = AES_Round(AES0, AES1, AES2, AES3, text, ((uint4 *)ExpandedKey2)[j]);
+                barrier(CLK_LOCAL_MEM_FENCE);
+                xin[get_local_id(1)][get_local_id(0)] = text;
+                barrier(CLK_LOCAL_MEM_FENCE);
+                text = mix_and_propagate(xin);
+            }
+#pragma unroll 2
+            for (int i = 0; i < iterations; ++i) {
+                text ^= Scratchpad[IDX((i << 3) + get_local_id(1))];
+#pragma unroll 10
+                for (int j = 0; j < 10; ++j)
+                    text = AES_Round(AES0, AES1, AES2, AES3, text, ((uint4 *)ExpandedKey2)[j]);
+                barrier(CLK_LOCAL_MEM_FENCE);
+                xin[get_local_id(1)][get_local_id(0)] = text;
+                barrier(CLK_LOCAL_MEM_FENCE);
+                text = mix_and_propagate(xin);
+            }
+        }
+#else
+#pragma unroll 2
+        for (int i = 0; i < iterations; ++i) {
+            text ^= Scratchpad[IDX((i << 3) + get_local_id(1))];
+
+#pragma unroll
+            for (int j = 0; j < 10; ++j)
+                text = AES_Round(AES0, AES1, AES2, AES3, text, ((uint4 *)ExpandedKey2)[j]);
+        }
+#endif
+    }
+
+#ifdef CRYPTONIGHT_HEAVY
+    if (variant >= 3) {
+        /* Also left over threads performe this loop.
+        * The left over thread results will be ignored
+        */
+        for (size_t i = 0; i < 16; i++) {
+#pragma unroll
+            for (int j = 0; j < 10; ++j)
+                text = AES_Round(AES0, AES1, AES2, AES3, text, ((uint4 *)ExpandedKey2)[j]);
+            barrier(CLK_LOCAL_MEM_FENCE);
+            xin[get_local_id(1)][get_local_id(0)] = text;
+            barrier(CLK_LOCAL_MEM_FENCE);
+            text = mix_and_propagate(xin);
+        }
+    }
+#endif
+
+    if (gIdx < get_global_size(0))
     vstore2(as_ulong2(text), get_local_id(1) + 4, states);
 
     barrier(CLK_GLOBAL_MEM_FENCE);
 
-    if (!get_local_id(1))
-    {
+    if (gIdx < get_global_size(0)) {
+        if (!get_local_id(1)) {
         for (int i = 0; i < 25; ++i) State[i] = states[i];
 
         keccakf1600_2(State);
@@ -557,130 +674,8 @@ __kernel void search2(__global uint4 *Scratchpad, __global ulong *states)
     }
 }
 
-/*
-__kernel void cryptonight(__global ulong *input, __global uint4 *Scratchpad, __global ulong *states, __global uint *Branch0, __global uint *Branch1, __global uint *Branch2, __global uint *Branch3, ulong ThreadCount)
-{
-    uchar State[200];
-    __local uint AES0[256], AES1[256], AES2[256], AES3[256];
-    uchar ExpandedKey1[256], ExpandedKey2[256];
-    ulong inbuf[10], a[2], b[2];
-    uint4 text[8];
-
-    for(int i = 0; i < 256; ++i)
-    {
-        const uint tmp = AES0_C[i];
-        AES0[i] = tmp;
-        AES1[i] = rotate(tmp, 8U);
-        AES2[i] = rotate(tmp, 16U);
-        AES3[i] = rotate(tmp, 24U);
-    }
-
-    ((ulong8 *)inbuf)[0] = vload8(0, input);
-    inbuf[8] = input[8];
-    inbuf[9] = (ulong)((__global uint *)input)[18];
-
-    ((uint *)(((uchar *)inbuf) + 39))[0] = get_global_id(0);
-    CNKeccak((ulong *)State, inbuf);
-
-    a[0] = ((ulong *)State)[0] ^ ((ulong *)State)[4];
-    b[0] = ((ulong *)State)[2] ^ ((ulong *)State)[6];
-    a[1] = ((ulong *)State)[1] ^ ((ulong *)State)[5];
-    b[1] = ((ulong *)State)[3] ^ ((ulong *)State)[7];
-
-    for(uint i = 0; i < 8; ++i) text[i] = vload4(i + 4, (uint *)(State));
-
-    for(int i = 0; i < 4; ++i) ((ulong *)ExpandedKey1)[i] = ((ulong *)State)[i];
-    for(int i = 0; i < 4; ++i) ((ulong *)ExpandedKey2)[i] = ((ulong *)State)[i + 4];
-
-    AESExpandKey256(ExpandedKey1);
-    AESExpandKey256(ExpandedKey2);
-
-    mem_fence(CLK_LOCAL_MEM_FENCE);
-
-    Scratchpad += ((1 << 17) * (get_global_id(0) - get_global_offset(0)));
-
-    //#pragma unroll 1
-    for(int i = 0; i < (1 << 17); i += 8)
-    {
-        #pragma unroll
-        for(int j = 0; j < 10; ++j)
-        {
-            #pragma unroll
-            for(int x = 0; x < 8; ++x)
-                text[x] = AES_Round(AES0, AES1, AES2, AES3, text[x], ((uint4 *)ExpandedKey1)[j]);
-        }
-
-        for(int j = 0; j < 8; ++j) *(Scratchpad + i + j) = text[j];
-    }
-
-
-    uint4 b_x = ((uint4 *)b)[0];
-
-    //#pragma unroll 1
-    for(int i = 0; i < 0x80000; ++i)
-    {
-        ulong c[2];
-
-        ((uint4 *)c)[0] = Scratchpad[(a[0] & 0x1FFFF0) >> 4];
-        ((uint4 *)c)[0] = AES_Round(AES0, AES1, AES2, AES3, ((uint4 *)c)[0], ((uint4 *)a)[0]);
-        b_x ^= ((uint4 *)c)[0];
-
-        Scratchpad[(a[0] & 0x1FFFF0) >> 4] = b_x;
-
-        uint4 tmp;
-        tmp = Scratchpad[(c[0] & 0x1FFFF0) >> 4];
-
-        a[1] += c[0] * as_ulong2(tmp).s0;
-        a[0] += mul_hi(c[0], as_ulong2(tmp).s0);
-
-        Scratchpad[(c[0] & 0x1FFFF0) >> 4] = ((uint4 *)a)[0];
-
-        ((uint4 *)a)[0] ^= tmp;
-
-        b_x = ((uint4 *)c)[0];
-    }
-
-    for(uint i = 0; i < 8; ++i) text[i] = vload4(i + 4, (uint *)(State));
-
-    for(int i = 0; i < (1 << 17); i += 8)
-    {
-        #pragma unroll
-        for(int j = 0; j < 8; ++j) text[j] ^= Scratchpad[i + j];
-
-        #pragma unroll 1
-        for(int j = 0; j < 10; ++j)
-        {
-            #pragma unroll
-            for(int x = 0; x < 8; ++x)
-                text[x] = AES_Round(AES0, AES1, AES2, AES3, text[x], ((uint4 *)ExpandedKey2)[j]);
-        }
-    }
-
-    for(uint i = 0; i < 8; ++i) vstore4(text[i], i + 4, (uint *)(State));
-
-    keccakf1600((ulong *)State);
-
-    states += (25 * (get_global_id(0) - get_global_offset(0)));
-
-    for(int i = 0; i < 25; ++i) states[i] = ((ulong *)State)[i];
-
-    switch(State[0] & 3)
-    {
-        case 0:
-            Branch0[atomic_inc(Branch0 + ThreadCount)] = get_global_id(0) - get_global_offset(0);
-            break;
-        case 1:
-            Branch1[atomic_inc(Branch1 + ThreadCount)] = get_global_id(0) - get_global_offset(0);
-            break;
-        case 2:
-            Branch2[atomic_inc(Branch2 + ThreadCount)] = get_global_id(0) - get_global_offset(0);
-            break;
-        case 3:
-            Branch3[atomic_inc(Branch3 + ThreadCount)] = get_global_id(0) - get_global_offset(0);
-            break;
-    }
+    mem_fence(CLK_GLOBAL_MEM_FENCE);
 }
-*/
 
 #define VSWAP8(x)	(((x) >> 56) | (((x) >> 40) & 0x000000000000FF00UL) | (((x) >> 24) & 0x0000000000FF0000UL) \
           | (((x) >>  8) & 0x00000000FF000000UL) | (((x) <<  8) & 0x000000FF00000000UL) \
@@ -796,12 +791,6 @@ void search3_branch2(__global ulong *states, __global uint *output, uint Target)
         h7l ^= input[7];
     }
 
-    //output[0] = h6h;
-    //output[1] = h6l;
-    //output[2] = h7h;
-    //output[3] = h7l;
-
-	//if (as_uint2(h7l).s1 <= Target) output[atomic_inc(output + 0xFF)] = BranchBuf[idx] + get_global_offset(0);
 	if ((h7l >> 32) <= Target) 
 	{
 		int i = atomic_inc(output + 0xFF);
@@ -963,7 +952,7 @@ __kernel void search3(__global ulong *states, __global uint *output, uint target
 {
 	const uint idx = get_global_id(0) - get_global_offset(0);
 	
-	states += 25 * idx;
+	states += STATE_SIZE * idx;
 
 	switch (states[0] & 3)
 	{
