@@ -333,7 +333,9 @@ namespace SimpleCPUMiner.Miners.Stratum
                     if(mStreamWriter!=null)
                         mStreamWriter.Dispose();
 
-                    ActiveClient.ErrorCount++;
+                    if(ActiveClient != null)
+                        ActiveClient.ErrorCount++;
+
                     CheckClientStatus();
 
                     Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"Exception in Stratum.StreamReaderThread(): {ex.ToString()}", IsError = true });
@@ -353,9 +355,20 @@ namespace SimpleCPUMiner.Miners.Stratum
 
         private void CheckClientStatus()
         {
-            if (ActiveClient.ErrorCount == Consts.DefaultSettings.NumOfRetries * 5)
+            if(ActiveClient==null)
             {
-                Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"Stratum retry count reached ({ActiveClient.Pool.URL}), switching to failover pool.", IsError = true });
+                _activeClientID++;
+
+                if (_activeClientID == _clientDict.Count)
+                    _activeClientID = 1;
+
+                mReconnectionRequested = true;
+                return;
+            }
+
+            if (ActiveClient.ErrorCount == Consts.DefaultSettings.NumOfRetries * 2)
+            {
+                Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"Stratum retry/error count reached ({ActiveClient.Pool.URL}), switching to failover pool.", IsError = true });
                 ActiveClient.ErrorCount = 0;
                 _activeClientID++;
 

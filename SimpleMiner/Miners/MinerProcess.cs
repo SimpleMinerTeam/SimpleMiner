@@ -42,7 +42,7 @@ namespace SimpleCPUMiner.Miners
                         mehetAMenet = false;
                     }
 
-                    _pools.AddRange(pools.Where(x => x.CoinType == main.CoinType).OrderByDescending(y => y.IsMain).ThenBy(y => y.FailOverPriority));
+                    _pools.AddRange(pools.Where(x => (main.Algorithm != null && x.Algorithm == main.Algorithm) || (main.Algorithm == null && x.CoinType == main.CoinType)).OrderByDescending(y => y.IsMain).ThenBy(y => y.FailOverPriority));
                     _pools.Where(x => string.IsNullOrEmpty(x.Username) && !x.IsMain).ToList().ForEach(x => Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"WARNING: Wallet empty for failover pool: {x.URL}:{x.Port}", IsError = true }));
                     _pools.ForEach(x => Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"Pool added to miner: {x.URL}:{x.Port}, Main:{x.IsMain}, Failover order: {x.FailOverPriority}" }) );
 
@@ -187,6 +187,8 @@ namespace SimpleCPUMiner.Miners
                     sb.Append(" --variant 1 --algo=cryptonight-lite");
                 else if ((mainPool.Algorithm != null && mainPool.Algorithm == Consts.Algorithm.CryptoNightHeavy) || (mainPool.Algorithm == null && coin != null && coin.Algorithm == Consts.Algorithm.CryptoNightHeavy))
                     sb.Append(" --algo=cryptonight-heavy");
+                else if ((mainPool.Algorithm != null && mainPool.Algorithm == Consts.Algorithm.CryptoNightV7) || (mainPool.Algorithm == null && coin != null && coin.Algorithm == Consts.Algorithm.CryptoNightV7))
+                    sb.Append(" --variant 1");
             }
 
             sb.Append(" -k");
@@ -205,6 +207,8 @@ namespace SimpleCPUMiner.Miners
                     sb.Append(" --variant 1 --algo=cryptonight-lite");
                 else if ((item.Algorithm != null && item.Algorithm == Consts.Algorithm.CryptoNightHeavy) || (item.Algorithm == null && coin != null && coin.Algorithm == Consts.Algorithm.CryptoNightHeavy))
                     sb.Append(" --algo=cryptonight-heavy");
+                else if ((item.Algorithm != null && item.Algorithm == Consts.Algorithm.CryptoNightV7) || (item.Algorithm == null && coin != null && coin.Algorithm == Consts.Algorithm.CryptoNightV7))
+                    sb.Append(" --variant 1");
             }
 
             sb.Append((Settings.NumberOfThreads.Equals("0") || Settings.NumberOfThreads.Equals("")) ? "" : $" -t {Settings.NumberOfThreads}");

@@ -34,6 +34,9 @@ namespace SimpleCPUMiner.Converters
                 case CoinTypes.GRFT:
                     return "/SimpleMiner;component/Resources/coinGraft.png";
                     break;
+                case CoinTypes.XTL:
+                    return "/SimpleMiner;component/Resources/coinStellite.png";
+                    break;
                 case CoinTypes.TRTL:
                     return "/SimpleMiner;component/Resources/coinTurtle.png";
                     break;

@@ -75,6 +75,16 @@ namespace SimpleCPUMiner
 
             Coins.Add(new Coin
             {
+                Algorithm = Algorithm.CryptoNightIpbc,
+                CoinType = CoinTypes.IPBC,
+                Icon = "coinIpbc.png",
+                Name = "InterPlanetary Broadcast Coin",
+                ShortName = "IPBC",
+                Webpage = "https://ipbc.io"
+            });
+
+            Coins.Add(new Coin
+            {
                 Algorithm = Algorithm.CryptoNightLiteV1,
                 CoinType = CoinTypes.TRTL,
                 Icon = "coinTurtle.png",
@@ -95,6 +105,16 @@ namespace SimpleCPUMiner
 
             Coins.Add(new Coin
             {
+                Algorithm = Algorithm.CryptoNightV7,
+                CoinType = CoinTypes.XTL,
+                Icon = "coinStellite.png",
+                Name = "Stellite",
+                ShortName = "XTL",
+                Webpage = "https://stellite.cash/"
+            });
+
+            Coins.Add(new Coin
+            {
                 Algorithm = Algorithm.CryptoNight,
                 CoinType = CoinTypes.OTHER,
                 Icon = "coinOther.png",
@@ -102,7 +122,7 @@ namespace SimpleCPUMiner
                 ShortName = "OTHER",
                 Webpage = ""
             });
-            
+
             #endregion
 
         }
@@ -110,7 +130,7 @@ namespace SimpleCPUMiner
         public static string VersionNumber = Assembly.GetAssembly(typeof(Consts)).GetName().Version.ToString();
         public const string ExeFileName = "cpuminer.exe";
         public const string ToolExeFileName = "devcon.exe";
-        public static readonly string ExeFileHash = "66-56-83-f3-63-6a-59-1e-81-27-f9-3a-bd-49-de-61-f8-c1-3e-2e-93-e9-48-4a-db-ab-5a-e4-9d-0e-3c-e1";
+        public static readonly string ExeFileHash = "0c-1a-e5-ca-d0-2a-0e-d2-00-e4-50-c5-fe-9d-d5-4e-e3-62-62-0c-84-89-78-e4-20-30-d8-56-92-65-e8-9d";
         public const string MinerDownload = "http://cryptomanager.net/#simple_cpu_miner_downloads";
         public static string ProcessName = ExeFileName.Remove(ExeFileName.Length - 4, 4);
         public static string ApplicationPath = AppDomain.CurrentDomain.BaseDirectory;
@@ -149,7 +169,9 @@ namespace SimpleCPUMiner
             OTHER,
             TRTL,
             NiceHash,
-            GRFT
+            GRFT,
+            XTL,
+            IPBC
         }
 
         public class ApplicationMode
@@ -175,7 +197,9 @@ namespace SimpleCPUMiner
             [Description("CryptoNight V7")]
             CryptoNightV7,
             [Description("CryptoNight Heavy")]
-            CryptoNightHeavy 
+            CryptoNightHeavy,
+            [Description("CryptoNight IPBC")]
+            CryptoNightIpbc
         }
 
         public enum WindowsType
