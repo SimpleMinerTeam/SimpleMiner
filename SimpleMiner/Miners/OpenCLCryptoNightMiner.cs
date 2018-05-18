@@ -70,7 +70,8 @@ namespace SimpleCPUMiner.Miners
             _stratum = pStratum;
             _coin = Consts.Coins.Where(x => x.CoinType == _stratum.ActiveClient.Pool.CoinType).FirstOrDefault();
 
-            if(_coin.Algorithm == Consts.Algorithm.CryptoNightHeavy)
+            if((_stratum.ActiveClient.Pool.Algorithm != null && _stratum.ActiveClient.Pool.Algorithm == Consts.Algorithm.CryptoNightHeavy)
+                || (_stratum.ActiveClient.Pool.Algorithm == null && _coin.Algorithm == Consts.Algorithm.CryptoNightHeavy))
                 globalWorkSizeA[0] = globalWorkSizeB[0] = Utils.NearestEven(pRawIntensity * pLocalWorkSize/2); 
             else
                 globalWorkSizeA[0] = globalWorkSizeB[0] = pRawIntensity * pLocalWorkSize;
@@ -109,7 +110,11 @@ namespace SimpleCPUMiner.Miners
                 return;
             }
 
-            switch(_coin.Algorithm)
+            Consts.Algorithm? algo = _stratum.ActiveClient.Pool.Algorithm;
+            if (algo == null)
+                algo = _coin.Algorithm;
+
+            switch (algo)
             {
                 case Consts.Algorithm.CryptoNight:
                 case Consts.Algorithm.CryptoNightV7:
@@ -123,6 +128,10 @@ namespace SimpleCPUMiner.Miners
                 case Consts.Algorithm.CryptoNightLite:
                 case Consts.Algorithm.CryptoNightLiteV1:
                     programName = "cryptonightLite";
+                    scratchpadsBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite, ((long)1 << 20) * globalWorkSizeA[0]);
+                    break;
+                case Consts.Algorithm.CryptoNightIpbc:
+                    programName = "cryptonightIpbc";
                     scratchpadsBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite, ((long)1 << 20) * globalWorkSizeA[0]);
                     break;
             }
@@ -182,7 +191,7 @@ namespace SimpleCPUMiner.Miners
                         if (_stratum == null || _stratum.GetJob() == null)
                             throw new TimeoutException("Stratum server failed to send a new job.");
 
-                        System.Diagnostics.Stopwatch consoleUpdateStopwatch = new System.Diagnostics.Stopwatch();
+                        Stopwatch consoleUpdateStopwatch = new Stopwatch();
                         CryptoNightStratum.Work work;
 
                         while (!Stopped && (work = _stratum.GetWork()) != null)
@@ -209,7 +218,8 @@ namespace SimpleCPUMiner.Miners
                                 searchKernel1.SetValueArgument<uint>(3, 0);
                                 searchKernel2.SetValueArgument<uint>(2, 0);
                             }
-                            else if((_stratum.ActiveClient.Pool.Algorithm != null && _stratum.ActiveClient.Pool.Algorithm == Consts.Algorithm.CryptoNightLiteV1) || (_stratum.ActiveClient.Pool.Algorithm == null && _coin.Algorithm == Consts.Algorithm.CryptoNightLiteV1))
+                            else if((_stratum.ActiveClient.Pool.Algorithm != null && (_stratum.ActiveClient.Pool.Algorithm == Consts.Algorithm.CryptoNightLiteV1 || _stratum.ActiveClient.Pool.Algorithm == Consts.Algorithm.CryptoNightV7 || _stratum.ActiveClient.Pool.Algorithm == Consts.Algorithm.CryptoNightIpbc))
+                                || (_stratum.ActiveClient.Pool.Algorithm == null && (_coin.Algorithm == Consts.Algorithm.CryptoNightLiteV1 || _coin.Algorithm == Consts.Algorithm.CryptoNightV7 || _coin.Algorithm == Consts.Algorithm.CryptoNightIpbc)))
                             {
                                 searchKernel0.SetValueArgument<uint>(3, 7);
                                 searchKernel1.SetValueArgument<uint>(3, 7);
@@ -232,7 +242,6 @@ namespace SimpleCPUMiner.Miners
                             {
                                 globalWorkOffsetA[0] = globalWorkOffsetB[0] = startNonce;
 
-                                // Get a new local extranonce if necessary.
                                 if (NiceHashMode)
                                 {
                                     if ((startNonce & 0xffff) + (UInt32)globalWorkSizeA[0] >= 0x10000)
@@ -244,7 +253,7 @@ namespace SimpleCPUMiner.Miners
                                         break;
                                 }
 
-                                System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+                                Stopwatch sw = new Stopwatch();
                                 sw.Start();
                                 output[255] = 0; // output[255] is used as an atomic counter.
                                 Queue.Write<UInt32>(outputBuffer, true, 0, outputSize, (IntPtr)outputPtr, null);

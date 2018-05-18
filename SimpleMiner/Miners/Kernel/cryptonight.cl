@@ -15,7 +15,7 @@ uint amd_bfe(uint src0, uint src1, uint src2)
 #endif
 #define BYTE(x, y)	(amd_bfe((x), (y) << 3U, 8U))
 
-#if !defined(CRYPTONIGHT_HEAVY) && !defined(CRYPTONIGHT_LIGHT)
+#if !defined(CRYPTONIGHT_HEAVY) && !defined(CRYPTONIGHT_LIGHT) && !defined(CRYPTONIGHT_IPBC)
 #define MEMORY (2UL * 1024 * 1024)
 #define MASK 0x1FFFF0
 #define ITERATIONS 0x80000
@@ -513,6 +513,12 @@ __kernel void search1(__global uint4 *Scratchpad, __global ulong *states, __glob
 
 			#ifndef CRYPTONIGHT_HEAVY
 			VARIANT1_2(a[1]);
+			#endif
+
+			#ifdef CRYPTONIGHT_IPBC
+			long prev = *((__global long*)(Scratchpad + (IDX((c[0] & mask) >> 4))));
+			long cur = *((__global long*)(Scratchpad + (IDX((c[0] & mask) >> 4))) + 1);
+			*((__global long*)(Scratchpad + (IDX((c[0] & mask) >> 4))) + 1) = prev ^ cur;
 			#endif
 
 			((uint4 *)a)[0] ^= tmp;

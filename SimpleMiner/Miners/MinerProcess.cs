@@ -189,6 +189,8 @@ namespace SimpleCPUMiner.Miners
                     sb.Append(" --algo=cryptonight-heavy");
                 else if ((mainPool.Algorithm != null && mainPool.Algorithm == Consts.Algorithm.CryptoNightV7) || (mainPool.Algorithm == null && coin != null && coin.Algorithm == Consts.Algorithm.CryptoNightV7))
                     sb.Append(" --variant 1");
+                else if ((mainPool.Algorithm != null && mainPool.Algorithm == Consts.Algorithm.CryptoNightIpbc) || (mainPool.Algorithm == null && coin != null && coin.Algorithm == Consts.Algorithm.CryptoNightIpbc))
+                    sb.Append(" --variant ipbc --algo=cryptonight-lite");
             }
 
             sb.Append(" -k");
@@ -209,6 +211,8 @@ namespace SimpleCPUMiner.Miners
                     sb.Append(" --algo=cryptonight-heavy");
                 else if ((item.Algorithm != null && item.Algorithm == Consts.Algorithm.CryptoNightV7) || (item.Algorithm == null && coin != null && coin.Algorithm == Consts.Algorithm.CryptoNightV7))
                     sb.Append(" --variant 1");
+                else if ((item.Algorithm != null && item.Algorithm == Consts.Algorithm.CryptoNightIpbc) || (item.Algorithm == null && coin != null && coin.Algorithm == Consts.Algorithm.CryptoNightIpbc))
+                    sb.Append(" --variant ipbc --algo=cryptonight-lite");
             }
 
             sb.Append((Settings.NumberOfThreads.Equals("0") || Settings.NumberOfThreads.Equals("")) ? "" : $" -t {Settings.NumberOfThreads}");

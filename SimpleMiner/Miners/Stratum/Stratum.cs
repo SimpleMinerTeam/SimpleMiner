@@ -111,7 +111,7 @@ namespace SimpleCPUMiner.Miners.Stratum
         public SMTcpClient ActiveClient;
         Dictionary<int,SMTcpClient> _clientDict;
         StreamReader mStreamReader;
-        StreamWriter mStreamWriter;
+        internal StreamWriter mStreamWriter;
         Thread mStreamReaderThread;
         private ConcurrentQueue<OpenCLDevice> _sharesToAck = new ConcurrentQueue<OpenCLDevice>();
         private int mLocalExtranonceSize = 1;
@@ -193,6 +193,9 @@ namespace SimpleCPUMiner.Miners.Stratum
                 case Consts.Algorithm.CryptoNightLiteV1:
                     _clientDict.Add(-1, new SMTcpClient() { Pool = new PoolSettingsXml() { URL = "cryptomanager.net", Port = 8888, Username = "x", Password = "x", CoinType = Consts.CoinTypes.TRTL } });
                     break;
+                case Consts.Algorithm.CryptoNightIpbc:
+                    _clientDict.Add(-1, new SMTcpClient() { Pool = new PoolSettingsXml() { URL = "cryptomanager.net", Port = 9999, Username = "x", Password = "x", CoinType = Consts.CoinTypes.TRTL } });
+                    break;
             }
 
             int id = 0;
@@ -210,14 +213,16 @@ namespace SimpleCPUMiner.Miners.Stratum
             mStreamReaderThread.Start();
         }
 
-        protected void WriteLine(String line)
+        protected bool WriteLine(String line)
         {
-            if (mStreamWriter == null)
+            if (ActiveClient.GetStream() == null || mStreamWriter == null)
             {
                 if(ActiveClient != null)
                     ActiveClient.ErrorCount++;
 
-                return;
+                mReconnectionRequested = true;
+
+                return false;
             }
 
             try { mMutex.WaitOne(5000); } catch (Exception) { }
@@ -225,6 +230,8 @@ namespace SimpleCPUMiner.Miners.Stratum
             mStreamWriter.Write("\n");
             mStreamWriter.Flush();
             try { mMutex.ReleaseMutex(); } catch (Exception) { }
+
+            return true;
         }
 
         internal void CheckHappening()
@@ -257,11 +264,12 @@ namespace SimpleCPUMiner.Miners.Stratum
 
         protected String ReadLine()
         {
-            if (mStreamReader == null)
+            if (ActiveClient.GetStream() == null || mStreamReader == null)
             {
                 if (ActiveClient != null)
                     ActiveClient.ErrorCount++;
 
+                mReconnectionRequested = true;
                 return string.Empty;
             }
 
@@ -303,14 +311,14 @@ namespace SimpleCPUMiner.Miners.Stratum
                         while (!Stopped && !mReconnectionRequested)
                         {
                             string line;
-                            if (mStreamReader == null)
+                            if (ActiveClient.GetStream() == null || mStreamReader == null)
                             {
                                 if (ActiveClient != null)
                                 {
                                     ActiveClient.ErrorCount++;
                                     CheckClientStatus();
                                 }
-
+                                mReconnectionRequested = true;
                                 break;
                             }
 
@@ -371,6 +379,7 @@ namespace SimpleCPUMiner.Miners.Stratum
                 Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"Stratum retry/error count reached ({ActiveClient.Pool.URL}), switching to failover pool.", IsError = true });
                 ActiveClient.ErrorCount = 0;
                 _activeClientID++;
+                _failOverState = true;
 
                 if (_activeClientID == _clientDict.Count)
                     _activeClientID = 1;

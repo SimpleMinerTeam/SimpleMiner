@@ -22,4 +22,9 @@ namespace SimpleCPUMiner.Messages
     {
         public bool IsShow { get; set; }
     }
+
+    public class ActivePoolMessage
+    {
+        public string URL { get; set; }
+    }
 }

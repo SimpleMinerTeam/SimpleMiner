@@ -21,6 +21,7 @@
         <conv:Speed2Hashrate x:Key="Speed2Hashrate" />
         <conv:NullableBool2VisibilityConverter x:Key="NullableBool2VisibilityConverter" />
         <conv:Index2NiceIndex x:Key="Index2NiceIndex" />
+        <conv:Pool2NameConverter x:Key="Pool2NameConverter" />
         <Style x:Key="TextBoxStyle" TargetType="{x:Type TextBox}">
             <Setter Property="Background" Value="White" />
             <Setter Property="BorderBrush" Value="DimGray" />
@@ -307,7 +308,7 @@
                                 </Grid.ColumnDefinitions>
                                 <Label Content="Icon" HorizontalAlignment="Center" />
                                 <Label Grid.Column="1" />
-                                <Label Content="Pool address" Grid.Column="2" />
+                                <Label Content="Name" Grid.Column="2" />
                                 <Label Content="Port" Grid.Column="3" />
                                 <Label Content="Order" Grid.Column="4" HorizontalAlignment="Center" />
                             </Grid>
@@ -330,7 +331,7 @@
                                         <Image Stretch="Fill" Width="24px" Height="24px" Source="{Binding CoinType, Converter={StaticResource CoinType2ImageSource}}" RenderOptions.BitmapScalingMode="HighQuality" />
                                         <TextBlock Text="[M]" VerticalAlignment="Center" TextAlignment="Right" Margin="0,0,4,0" HorizontalAlignment="Stretch" Visibility="{Binding IsMain, Converter={StaticResource Bool2VisibilityConverter}}" Grid.Column="1" Padding="0" />
                                         <TextBlock Text="[F]" VerticalAlignment="Center" TextAlignment="Right" Margin="0,0,4,0" HorizontalAlignment="Stretch" Visibility="{Binding IsFailOver, Converter={StaticResource Bool2VisibilityConverter}}" Grid.Column="1" Padding="0" />
-                                        <Label Content="{Binding URL}" VerticalAlignment="Center" Grid.Column="2" Padding="0" />
+                                        <Label Content="{Binding Converter={StaticResource Pool2NameConverter}}" VerticalAlignment="Center" Grid.Column="2" Padding="0" />
                                         <Label Content="{Binding Port}" VerticalAlignment="Center" Grid.Column="3" Padding="0" />
                                         <TextBlock Text="{Binding FailOverPriority}" VerticalAlignment="Center" Grid.Column="4" Visibility="{Binding IsFailOver, Converter={StaticResource Bool2VisibilityConverter}}" TextAlignment="Center" HorizontalAlignment="Stretch" Padding="0" />
                                     </Grid>
@@ -442,11 +443,11 @@
                         </ListView>
                     </Grid>
                 </TabItem>
-                <TabItem x:Name="tabOptimization" Header="Optimization" Visibility="Collapsed">
+                <TabItem x:Name="tabOptimization" Header="Optimization" Visibility="Visible">
                     <Grid Background="#FFE5E5E5" IsEnabled="{Binding IsIdle}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="10*"/>
-                            <ColumnDefinition Width="90"/>
+                            <ColumnDefinition Width="1"/>
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition></RowDefinition>
@@ -459,7 +460,7 @@
                                             <ColumnDefinition Width="10*"/>
                                             <ColumnDefinition Width="90"/>
                                         </Grid.ColumnDefinitions>
-                                        <Label Content="{Binding Name}" VerticalAlignment="Center" Grid.Column="0" Padding="0" Width="220"/>
+                                        <Label Content="{Binding Name}" VerticalAlignment="Center" Grid.Column="0" Padding="0" Width="310"/>
                                         <ToggleButton x:Name="toggleIsOn" Visibility="{Binding IsOn, Converter={StaticResource NullableBool2VisibilityConverter}}" Command="{Binding ApplyCommand}" Grid.Column="1" HorizontalAlignment="Right" Style="{DynamicResource ToggleButtonStyle}" Width="80" TabIndex="8" VerticalAlignment="Center" IsChecked="{Binding IsOn}"/>
                                         <Label x:Name="lblNotSupported" Content="N/A" Visibility="{Binding IsNull, Converter={StaticResource Bool2VisibilityConverter}}" Grid.Column="1" HorizontalAlignment="Right" Width="80" TabIndex="8" VerticalAlignment="Center" />
                                     </Grid>
@@ -468,9 +469,9 @@
                         </ListView>
                         <Label Grid.RowSpan="2" Grid.ColumnSpan="3" x:Name="lbNeedAdminPrivilege" Content="Need Administrator privilege!" Visibility="{Binding IsVisibleAdminLabel}" Foreground="Red" FontWeight="Bold" Background="AliceBlue" FontSize="18" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
                         <StackPanel Orientation="Vertical" Grid.Column="1">
-                            <Button x:Name="btnProcesses" Style="{DynamicResource RoundCorner}" Content="Processes" IsEnabled="{Binding IsAdministrator}" Height="28px" HorizontalAlignment="Stretch" Margin="5,10,5,0" />
-                            <Button x:Name="btnBuiltInApps" Style="{DynamicResource RoundCorner}" Content="Built-in apps" IsEnabled="{Binding IsAdministrator}" Height="28px" HorizontalAlignment="Stretch" Margin="5,10,5,0" />
-                            <Button x:Name="btnScheduledTasks" Style="{DynamicResource RoundCorner}" Content="Sched. tasks" IsEnabled="{Binding IsAdministrator}" Height="28px" HorizontalAlignment="Stretch" Margin="5,10,5,0" />
+                            <Button x:Name="btnProcesses" Style="{DynamicResource RoundCorner}" Visibility="Collapsed" Content="Processes" IsEnabled="{Binding IsAdministrator}" Height="28px" HorizontalAlignment="Stretch" Margin="5,10,5,0" />
+                            <Button x:Name="btnBuiltInApps" Style="{DynamicResource RoundCorner}" Visibility="Collapsed" Content="Built-in apps" IsEnabled="{Binding IsAdministrator}" Height="28px" HorizontalAlignment="Stretch" Margin="5,10,5,0" />
+                            <Button x:Name="btnScheduledTasks" Style="{DynamicResource RoundCorner}" Visibility="Collapsed" Content="Sched. tasks" IsEnabled="{Binding IsAdministrator}" Height="28px" HorizontalAlignment="Stretch" Margin="5,10,5,0" />
                         </StackPanel>
                     </Grid>
                 </TabItem>
@@ -485,9 +486,22 @@
                         <Label x:Name="labelOutput" Content="Miner output" HorizontalAlignment="Left" VerticalAlignment="Top" />
                         <CheckBox x:Name="checkBoxIsLogging" Margin="0,3,7,0" Content="Log to file" HorizontalAlignment="Right"  VerticalAlignment="Top" IsChecked="{Binding SelectedMinerSettings.IsLogging}"/>
                         <ListView x:Name="listViewOutputString" Margin="5,21,5,4" ItemsSource="{Binding MinerOutputString}" ScrollViewer.ScrollChanged="ScrollViewer_ScrollChanged" ScrollViewer.HorizontalScrollBarVisibility="Hidden" ItemContainerStyle="{StaticResource AlternatingListViewItemStyle}" AlternationCount="2" >
+                            <ListView.CommandBindings>
+                                <CommandBinding Command="ApplicationCommands.Copy" Executed="CtrlCCopyCmdExecuted" />
+                            </ListView.CommandBindings>
                             <ListView.ItemTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding}" TextWrapping="Wrap" Width="390" />
+                                    <TextBlock Text="{Binding}" TextWrapping="Wrap" Width="390">
+                                        <TextBlock.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Command="Copy">
+                                                    <MenuItem.CommandBindings>
+                                                        <CommandBinding Command="ApplicationCommands.Copy" Executed="RightClickCopyCmdExecuted" />
+                                                    </MenuItem.CommandBindings>
+                                                </MenuItem>
+                                            </ContextMenu>
+                                        </TextBlock.ContextMenu>
+                                    </TextBlock>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>

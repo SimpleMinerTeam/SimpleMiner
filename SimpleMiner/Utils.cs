@@ -132,7 +132,7 @@ namespace SimpleCPUMiner
             // The path to the key where Windows looks for startup applications
             RegistryKey rkApp = Registry.CurrentUser.OpenSubKey(Consts.StartupRegistryKey, true);
 
-            if (IsStartupItem())
+            //if (IsStartupItem()) //Kommentezve: 2018.05.12: túl szigorú így a vizsgálat és nem törölte a registryből csak ha az útvonal is egyezik
                 // Remove the value from the registry so that the application doesn't start
                 rkApp.DeleteValue(Consts.ApplicationName, false);
         }
@@ -476,6 +476,13 @@ namespace SimpleCPUMiner
                 //baj van :(
                 Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = "Failed to initialize Nvidia Managment Library." });
             }
+        }
+
+        public static string RemoveWhitespace(this string input)
+        {
+            return new string(input.ToCharArray()
+                .Where(c => !Char.IsWhiteSpace(c))
+                .ToArray());
         }
 
         /// <summary>

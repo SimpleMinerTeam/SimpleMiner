@@ -28,6 +28,9 @@ namespace SimpleCPUMiner.Converters
                 case CoinTypes.XMR:
                     return "/SimpleMiner;component/Resources/coinMonero.png";
                     break;
+                case CoinTypes.IPBC:
+                    return "/SimpleMiner;component/Resources/coinIpbc.png";
+                    break;
                 case CoinTypes.KRB:
                     return "/SimpleMiner;component/Resources/coinKrb.png";
                     break;
@@ -42,6 +45,12 @@ namespace SimpleCPUMiner.Converters
                     break;
                 case CoinTypes.NiceHash:
                     return "/SimpleMiner;component/Resources/coinNiceHash.png";
+                    break;
+                case CoinTypes.XHV:
+                    return "/SimpleMiner;component/Resources/coinHaven.png";
+                    break;
+                case CoinTypes.LOKI:
+                    return "/SimpleMiner;component/Resources/coinLoki.png";
                     break;
                 default:
                     return "/SimpleMiner;component/Resources/coinOther.png";

@@ -103,7 +103,10 @@ namespace SimpleCPUMiner
                 URL = "pool.supportxmr.com",
                 Port = 5555,
                 Username = "",
-                Password = DefaultSettings.Password
+                Password = DefaultSettings.Password,
+                Name = "supportXMR",
+                Website = "https://supportxmr.com/#/home",
+                Algorithm = Algorithm.CryptoNightV7
             });
 
             Pools.Add(new PoolSettingsXml()
@@ -118,7 +121,10 @@ namespace SimpleCPUMiner
                 URL = "etn-pool.proxpool.com",
                 Port = 5555,
                 Username = "",
-                Password = DefaultSettings.Password
+                Password = DefaultSettings.Password,
+                Name = "Proxpool (ETN)",
+                Website = "http://etn.proxpool.com/",
+                Algorithm = Algorithm.CryptoNight
             });
 
             Pools.Add(new PoolSettingsXml()
@@ -133,7 +139,10 @@ namespace SimpleCPUMiner
                 URL = "pool.miner-coin.eu",
                 Port = 4444,
                 Username = "",
-                Password = DefaultSettings.Password
+                Password = DefaultSettings.Password,
+                Name = "Sumokoin Pool",
+                Website = "http://miner-coin.eu/sumokoin/",
+                Algorithm = Algorithm.CryptoNightHeavy
             });
 
             Pools.Add(new PoolSettingsXml()
@@ -146,9 +155,84 @@ namespace SimpleCPUMiner
                 IsMain = false,
                 IsRemoveable = true,
                 URL = "krb.miner.rocks",
-                Port = 3333,
+                Port = 5555,
                 Username = "",
-                Password = DefaultSettings.Password
+                Password = DefaultSettings.Password,
+                Name = "Miner.Rocks (KRB)",
+                Website = "https://krb.miner.rocks/",
+                Algorithm = Algorithm.CryptoNight
+            });
+
+            Pools.Add(new PoolSettingsXml()
+            {
+                ID = 5,
+                CoinType = CoinTypes.GRFT,
+                IsCPUPool = true,
+                IsGPUPool = true,
+                IsFailOver = false,
+                IsMain = false,
+                IsRemoveable = true,
+                URL = "graft.miner.rocks",
+                Port = 5555,
+                Username = "",
+                Password = DefaultSettings.Password,
+                Name = "Miner.Rocks (GRFT)",
+                Website = "https://graft.miner.rocks/",
+                Algorithm = Algorithm.CryptoNightV7
+            });
+
+            Pools.Add(new PoolSettingsXml()
+            {
+                ID = 6,
+                CoinType = CoinTypes.XTL,
+                IsCPUPool = true,
+                IsGPUPool = true,
+                IsFailOver = false,
+                IsMain = false,
+                IsRemoveable = true,
+                URL = "stellite.miner.rocks",
+                Port = 5555,
+                Username = "",
+                Password = DefaultSettings.Password,
+                Name = "Miner.Rocks (XTL)",
+                Website = "https://stellite.miner.rocks/",
+                Algorithm = Algorithm.CryptoNightV7
+            });
+
+            Pools.Add(new PoolSettingsXml()
+            {
+                ID = 7,
+                CoinType = CoinTypes.LOKI,
+                IsCPUPool = true,
+                IsGPUPool = true,
+                IsFailOver = false,
+                IsMain = false,
+                IsRemoveable = true,
+                URL = "loki.miner.rocks",
+                Port = 5555,
+                Username = "",
+                Password = DefaultSettings.Password,
+                Name = "Miner.Rocks (LOKI)",
+                Website = "https://loki.miner.rocks/",
+                Algorithm = Algorithm.CryptoNightHeavy
+            });
+
+            Pools.Add(new PoolSettingsXml()
+            {
+                ID = 8,
+                CoinType = CoinTypes.XHV,
+                IsCPUPool = true,
+                IsGPUPool = true,
+                IsFailOver = false,
+                IsMain = false,
+                IsRemoveable = true,
+                URL = "haven.miner.rocks",
+                Port = 5555,
+                Username = "",
+                Password = DefaultSettings.Password,
+                Name = "Miner.Rocks (XHV)",
+                Website = "https://haven.miner.rocks/",
+                Algorithm = Algorithm.CryptoNightHeavy
             });
 
             return Pools;

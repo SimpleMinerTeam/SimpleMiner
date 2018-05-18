@@ -84,18 +84,6 @@ namespace SimpleCPUMiner.Miners.Stratum
             {
                 mVariant = -1;
 
-                //if (!String.IsNullOrWhiteSpace(variant))
-                //{
-                //    int result;
-                //    if (Int32.TryParse(variant, out result))
-                //    {
-                //        if (result >= -1 && result <= 1)
-                //        {
-                //            mVariant = result;
-                //        }
-                //    }
-                //}
-
                 if (mVariant == -1)
                 {
                     mVariant = mBlob[0];
@@ -167,33 +155,38 @@ namespace SimpleCPUMiner.Miners.Stratum
                     { "agent", Consts.ApplicationName + "/" + Consts.VersionNumber}}},
                 { "id", 1 }
             });
-            WriteLine(line);
 
-            if ((line = ReadLine()) == null)
-                throw new Exception("Disconnected from stratum server.");
-            JContainer result;
-            try
+            if (WriteLine(line))
             {
-                Dictionary<String, Object> response = JsonConvert.DeserializeObject<Dictionary<string, Object>>(line);
-                result = ((JContainer)response["result"]);
-                var status = (String)(result["status"]);
-                if (status != "OK")
-                    throw new Exception("Authorization failed.");
-            }
-            catch (Exception)
-            {
-                throw (new Exception("No answer."));
-            }
+                if ((line = ReadLine()) == null)
+                    throw new Exception("Disconnected from stratum server.");
+                JContainer result;
+                try
+                {
+                    Dictionary<String, Object> response = JsonConvert.DeserializeObject<Dictionary<string, Object>>(line);
+                    result = ((JContainer)response["result"]);
+                    var status = (String)(result["status"]);
+                    if (status != "OK")
+                        throw new Exception("Authorization failed.");
+                }
+                catch (Exception)
+                {
+                    throw (new Exception("No answer."));
+                }
 
-            try { mMutex.WaitOne(5000); } catch (Exception) { }
-            mUserID = (String)(result["id"]);
-            mJob = new Job(this, (String)(((JContainer)result["job"])["job_id"]), (String)(((JContainer)result["job"])["blob"]), (String)(((JContainer)result["job"])["target"]), (String)(((JContainer)result["job"])["variant"]));
-            try { mMutex.ReleaseMutex(); } catch (Exception) { }
+                try { mMutex.WaitOne(5000); } catch (Exception) { }
+                mUserID = (String)(result["id"]);
+                mJob = new Job(this, (String)(((JContainer)result["job"])["job_id"]), (String)(((JContainer)result["job"])["blob"]), (String)(((JContainer)result["job"])["target"]), (String)(((JContainer)result["job"])["variant"]));
+                try { mMutex.ReleaseMutex(); } catch (Exception) { }
+            }
+            else
+            {
+                Reconnect();
+            }
         }
 
         public void Submit(OpenCLDevice device, Job job, UInt32 output, String result)
         {
-
             try { mMutex.WaitOne(5000); } catch (Exception) { }
             ReportSubmittedShare(device);
             try
@@ -207,8 +200,13 @@ namespace SimpleCPUMiner.Miners.Stratum
                         { "nonce", stringNonce },
                         { "result", result }}},
                     { "id", 4 }});
-                WriteLine(message);
-                Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"Device #{device.ADLAdapterIndex} submitted a share." });
+                if(WriteLine(message))
+                    Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"Device #{device.ADLAdapterIndex} submitted a share." });
+                else
+                {
+                    Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"Device #{device.ADLAdapterIndex} failed to submit share (network issue)" });
+                    Reconnect();
+                }
             }
             catch (Exception ex)
             {

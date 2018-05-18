@@ -115,6 +115,26 @@ namespace SimpleCPUMiner
 
             Coins.Add(new Coin
             {
+                Algorithm = Algorithm.CryptoNightHeavy,
+                CoinType = CoinTypes.XHV,
+                Icon = "coinHaven.png",
+                Name = "Haven Protocol",
+                ShortName = "XHV",
+                Webpage = "https://havenprotocol.com"
+            });
+
+            Coins.Add(new Coin
+            {
+                Algorithm = Algorithm.CryptoNightHeavy,
+                CoinType = CoinTypes.LOKI,
+                Icon = "coinLoki.png",
+                Name = "Loki",
+                ShortName = "LOKI",
+                Webpage = "https://loki.network/"
+            });
+
+            Coins.Add(new Coin
+            {
                 Algorithm = Algorithm.CryptoNight,
                 CoinType = CoinTypes.OTHER,
                 Icon = "coinOther.png",
@@ -130,7 +150,7 @@ namespace SimpleCPUMiner
         public static string VersionNumber = Assembly.GetAssembly(typeof(Consts)).GetName().Version.ToString();
         public const string ExeFileName = "cpuminer.exe";
         public const string ToolExeFileName = "devcon.exe";
-        public static readonly string ExeFileHash = "0c-1a-e5-ca-d0-2a-0e-d2-00-e4-50-c5-fe-9d-d5-4e-e3-62-62-0c-84-89-78-e4-20-30-d8-56-92-65-e8-9d";
+        public static readonly string ExeFileHash = "09-a2-aa-75-c6-20-f0-f1-ff-b3-72-44-14-d0-ba-cc-50-38-33-3d-3d-bb-1c-1a-67-89-44-41-5e-0e-7f-2f";
         public const string MinerDownload = "http://cryptomanager.net/#simple_cpu_miner_downloads";
         public static string ProcessName = ExeFileName.Remove(ExeFileName.Length - 4, 4);
         public static string ApplicationPath = AppDomain.CurrentDomain.BaseDirectory;
@@ -171,7 +191,9 @@ namespace SimpleCPUMiner
             NiceHash,
             GRFT,
             XTL,
-            IPBC
+            IPBC,
+            XHV,
+            LOKI
         }
 
         public class ApplicationMode
@@ -199,7 +221,9 @@ namespace SimpleCPUMiner
             [Description("CryptoNight Heavy")]
             CryptoNightHeavy,
             [Description("CryptoNight IPBC")]
-            CryptoNightIpbc
+            CryptoNightIpbc,
+            //[Description("CryptoNight XTL")]
+            //CryptoNightXtl,
         }
 
         public enum WindowsType

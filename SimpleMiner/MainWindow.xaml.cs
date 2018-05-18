@@ -73,12 +73,13 @@ namespace SimpleCPUMiner
                 {
                     willNavigate = false;
                     var vm = DataContext as MainViewModel;
-                    if (string.IsNullOrEmpty(vm.CustomSettings.NotificationURL))
+                    if (vm.CustomSettings == null || string.IsNullOrEmpty(vm.CustomSettings.NotificationURL))
                         wbContent.Source = new Uri($"http://cryptomanager.net/minernotification.aspx?v={Consts.VersionNumber}&h={vm.Speed}");
                     else
                         wbContent.Source = new Uri(vm.CustomSettings.NotificationURL);
 
-                    wbContent.Refresh();
+                    //wbContent.Refresh();
+                    wbContent.Navigate(wbContent.Source);
                 }
                 catch
                 {
@@ -90,6 +91,29 @@ namespace SimpleCPUMiner
 
         public MainWindow(MinerSettings _minerSettings)
         {
+        }
+
+        private void CtrlCCopyCmdExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            ListView lv = (ListView)(sender);
+            var selected = lv.SelectedItem;
+
+            if (selected != null)
+                Clipboard.SetText(selected.ToString());
+        }
+
+        private void CtrlCCopyCmdCanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = true;
+        }
+
+        private void RightClickCopyCmdExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            MenuItem mi = (MenuItem)sender;
+            var selected = mi.DataContext;
+
+            if (selected != null)
+                Clipboard.SetText(selected.ToString());
         }
 
         private void PortPrevTextInput(object sender, TextCompositionEventArgs e)

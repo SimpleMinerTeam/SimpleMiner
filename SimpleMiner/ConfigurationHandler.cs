@@ -25,7 +25,8 @@ namespace SimpleCPUMiner
                         IsCPUMiningEnabled = true,
                         MaxCPUUsage = oldSettings.SettingsList[0].MaxCPUUsage,
                         NumberOfThreads = oldSettings.SettingsList[0].NumberOfThreads,
-                        StartingDelayInSec = oldSettings.SettingsList[0].StartingDelayInSec
+                        StartingDelayInSec = oldSettings.SettingsList[0].StartingDelayInSec,
+                        IsLaunchOnWindowsStartup = oldSettings.SettingsList[0].IsLaunchOnWindowsStartup
                     };
                 }
                 else if(Consts.OSType == Consts.WindowsType._10_or_Server_2016 || Consts.OSType == Consts.WindowsType._8_1_or_Server_2012_R2)

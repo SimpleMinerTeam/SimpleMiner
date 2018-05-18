@@ -45,6 +45,7 @@ namespace SimpleCPUMiner.ViewModel
         {
             Pool.CoinType = SelectedCoin.CoinType;
             Pool.Algorithm = SelectedAlgo;
+            Pool.Username = Utils.RemoveWhitespace(Pool.Username);
             StringBuilder error = new StringBuilder();
 
             if (String.IsNullOrEmpty(Pool.URL))
@@ -67,6 +68,9 @@ namespace SimpleCPUMiner.ViewModel
 
             if (Pool.Port<1)
                 error.AppendLine("The port field has an invalid value!");
+
+            if (String.IsNullOrEmpty(Pool.Name))
+                Pool.Name = Pool.URL;
 
             if(error.Length>0)
             {

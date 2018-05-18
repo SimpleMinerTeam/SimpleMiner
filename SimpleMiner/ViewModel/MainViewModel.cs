@@ -271,7 +271,7 @@ namespace SimpleCPUMiner.ViewModel
             registerMessageListeners();
             
             Log.SetLogger(log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType));
-            Log.InsertInfo($"Starting Simple Miner v{Consts.VersionNumber}");
+            Log.InsertInfo($"Starting Simple Miner v{Consts.VersionNumber} OS: Windows{Consts.OSType}");
 
             Utils.TryKillProcess(Consts.ProcessName);
 
@@ -287,6 +287,10 @@ namespace SimpleCPUMiner.ViewModel
             tempDelayInSec = SelectedMinerSettings.StartingDelayInSec;
             if (SelectedMinerSettings.IsLaunchOnWindowsStartup && SelectedMinerSettings.IsLaunchOnWindowsStartup != Utils.IsStartupItem())
                 setStartup(0);
+            else
+            {
+                Utils.RemoveProgramFromStartup();
+            }
 
             if (SelectedMinerSettings.IsAutostartMining)
                 autoStartMiningWithDelay();
@@ -466,7 +470,10 @@ namespace SimpleCPUMiner.ViewModel
                     Port = SelectedPool.Port,
                     URL = SelectedPool.URL,
                     Username = SelectedPool.Username,
-                    Algorithm = SelectedPool.Algorithm
+                    Algorithm = SelectedPool.Algorithm,
+                    Name = string.IsNullOrEmpty(SelectedPool.Name)? SelectedPool.URL : SelectedPool.Name,
+                    Website = SelectedPool.Website
+
                 },
                 
             };
@@ -502,6 +509,8 @@ namespace SimpleCPUMiner.ViewModel
                 SelectedPool.Port = ps.Port;
                 SelectedPool.Username = ps.Username.Trim();
                 SelectedPool.Algorithm = ps.Algorithm;
+                SelectedPool.Name = ps.Name;
+                SelectedPool.Website = ps.Website;
             }
 
             var poolzToSave = Pools.ToList();
@@ -654,6 +663,14 @@ namespace SimpleCPUMiner.ViewModel
         {
             if(OpenCLDevices != null)
                 GpuParameterHandler.WriteParameters(OpenCLDevices);
+
+            if (Devices.Count > 0)
+            {
+                Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = "The following devices are initialized:" });
+
+                foreach (var item in Devices)
+                    Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"{item.Name} [w: {item.WorkSize}, i: {item.Intensity}, t: {item.Threads}]", IsError = true });
+            }
 
             if (SelectedMinerSettings.IsCPUMiningEnabled && Utils.CheckInstallation() != CheckDetails.Installed)
             {
