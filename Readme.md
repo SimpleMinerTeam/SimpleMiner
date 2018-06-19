@@ -7,6 +7,36 @@ Our program based on XMRig miner.
 
 VERSION HISTORY
 ---------------
+v2.1.1.0 (2018/06/19)
+Bugfix:
+ - Electroneum fork support
+ - Decrease CPU usage when Nvidia GPU is in use
+ - Minor bug fixes
+
+v2.1.0.0 (2018/05/18)
+Improvements:
+ - IPBC support added
+ - Updated to the latest Xmrig version
+ - Windows optimization:
+	* UAC control
+	* Defender Real-time protection control
+	* Defender SmartScreen control
+	* Sleep mode control
+	* Windows update control
+	* AMD compute mode switching
+
+Bugfix:
+ - Autostart did not work properly in certain cases
+ - Improved stratum handling to avoid stucked connection
+
+v2.0.6.0 (2018/04/25)
+Improvements:
+ - Stellite (XTL) support
+
+Bugfix:
+ - Case of unstable network connection, Simple Miner may have closed
+ - Too many rejected shares case of using Cryptonight V7 algorithm with NiceHash
+
 v2.0.5.0 (2018/04/20)
 Improvements:
  - Cryptonight-Heavy support

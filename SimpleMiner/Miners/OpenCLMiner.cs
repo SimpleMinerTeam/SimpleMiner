@@ -3,8 +3,10 @@ using GalaSoft.MvvmLight.Messaging;
 using SimpleCPUMiner.Hardware;
 using SimpleCPUMiner.Messages;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 
 namespace SimpleCPUMiner.Miners
 {
@@ -15,11 +17,13 @@ namespace SimpleCPUMiner.Miners
         public ComputeDevice ComputeDevice { get { return OpenCLDevice.ComputeDevice; } }
         private static Object _lock = new Object();
         private static Object _lock2 = new Object();
-
+        public bool NvidiaEszkoz { get; private set; }
+        
         protected OpenCLMiner(OpenCLDevice pDevice, String pAlgorithmName, String pFirstAlgorithmName = "", String pSecondAlgorithmName = "")
             : base(pDevice, pAlgorithmName, pFirstAlgorithmName, pSecondAlgorithmName)
         {
             OpenCLDevice = pDevice;
+            NvidiaEszkoz = pDevice.ComputeDevice.Vendor.Equals(Consts.VendorNvidia);
             Queue = new ComputeCommandQueue(Context, ComputeDevice, ComputeCommandQueueFlags.OutOfOrderExecution);
         }
 
@@ -99,6 +103,97 @@ namespace SimpleCPUMiner.Miners
             }
 
             return program;
+        }
+    }
+
+    public class CryptoComputeEventList : ICollection<ComputeEventBase>
+    {
+        private List<ComputeEventBase> list = new List<ComputeEventBase>();
+
+        public int Count => list.Count;
+        public bool IsReadOnly => false;
+
+
+        public void Add(ComputeEventBase item)
+        {
+            list.Add(item);
+        }
+
+        public void Clear()
+        {
+            list.Clear();
+        }
+
+        public bool Contains(ComputeEventBase item)
+        {
+            return list.Contains(item);
+        }
+
+        public void CopyTo(ComputeEventBase[] array, int arrayIndex)
+        {
+            list.CopyTo(array, arrayIndex);
+        }
+
+        public IEnumerator<ComputeEventBase> GetEnumerator()
+        {
+            return list.GetEnumerator();
+        }
+
+        public bool Remove(ComputeEventBase item)
+        {
+            return list.Remove(item);
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IEnumerable)list).GetEnumerator();
+        }
+
+        public void Wait()
+        {
+            List<SMEventBase> SMEBList = new List<SMEventBase>();
+            List<WaitHandle> waitHandles = new List<WaitHandle>();
+
+            foreach (var item in list)
+            {
+                var SMEB = new SMEventBase(item);
+                waitHandles.Add(SMEB.Mres.WaitHandle);
+                SMEBList.Add(SMEB);
+            }
+
+            WaitHandle.WaitAll(waitHandles.ToArray());
+
+            SMEBList.ForEach(x => x.Dispose());
+        }
+
+        public class SMEventBase
+        {
+            public ComputeEventBase Event { get; set; }
+            public ManualResetEventSlim Mres = new ManualResetEventSlim();
+
+            public SMEventBase(ComputeEventBase @event)
+            {
+                Event = @event;
+
+                Event.Completed += Event_Completed;
+                Event.Aborted += Event_Aborted;
+            }
+
+            private void Event_Aborted(object sender, ComputeCommandStatusArgs args)
+            {
+                Mres.Set();
+            }
+
+            private void Event_Completed(object sender, ComputeCommandStatusArgs args)
+            {
+                Mres.Set();
+            }
+
+            internal void Dispose()
+            {
+                Event.Dispose();
+                Mres.Dispose();
+            }
         }
     }
 }

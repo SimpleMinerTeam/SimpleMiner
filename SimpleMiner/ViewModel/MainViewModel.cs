@@ -661,7 +661,7 @@ namespace SimpleCPUMiner.ViewModel
         /// </summary>
         private void startMining(int window)
         {
-            if(OpenCLDevices != null)
+            if(OpenCLDevices != null && !SelectedMinerSettings.ApplicationMode.Equals(ApplicationMode.Silent))
                 GpuParameterHandler.WriteParameters(OpenCLDevices);
 
             if (Devices.Count > 0)
@@ -764,6 +764,7 @@ namespace SimpleCPUMiner.ViewModel
         private void CloseWindow(Window window)
         {
             saveMinerSettings();
+            Thread.Sleep(500); //hogy kimentsük a fájlt
 
             if (window != null && !IsIdle)
             {
@@ -786,7 +787,8 @@ namespace SimpleCPUMiner.ViewModel
         /// </summary>
         private void saveMinerSettings()
         {
-            ConfigurationHandler.WriteParameters(SelectedMinerSettings);
+            if(!SelectedMinerSettings.ApplicationMode.Equals(ApplicationMode.Silent))
+                ConfigurationHandler.WriteParameters(SelectedMinerSettings);
         }
 
         /// <summary>

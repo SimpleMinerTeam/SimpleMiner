@@ -5,6 +5,7 @@ using SimpleCPUMiner.Messages;
 using SimpleCPUMiner.Miners.Stratum;
 using SimpleCPUMiner.Model;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -18,7 +19,7 @@ namespace SimpleCPUMiner.Miners
         private static readonly int outputSize = 256 + 255 * 8;
         static Mutex mProgramArrayMutex = new Mutex();
 
-        private CryptoNightStratum _stratum;
+        CryptoNightStratum _stratum;
 
         long[] globalWorkSizeA = new long[] { 0, 8 };
         long[] globalWorkSizeB = new long[] { 0 };
@@ -29,7 +30,7 @@ namespace SimpleCPUMiner.Miners
 
         Int32[] terminate = new Int32[1];
         UInt32[] output = new UInt32[outputSize];
-        byte[] input = new byte[76];
+        byte[] input = new byte[96];
 
         ComputeKernel searchKernel0 = null;
         ComputeKernel searchKernel1 = null;
@@ -193,11 +194,14 @@ namespace SimpleCPUMiner.Miners
 
                         Stopwatch consoleUpdateStopwatch = new Stopwatch();
                         CryptoNightStratum.Work work;
+                        var events = new CryptoComputeEventList();
 
                         while (!Stopped && (work = _stratum.GetWork()) != null)
                         {
                             var job = work.GetJob();                            
-                            Array.Copy(job.Blob, input, 76);
+                            Array.Copy(job.Blob, input, job.Blob.Length);
+                            input[job.Blob.Length] = 0x01;
+                            Array.Clear(input, job.Blob.Length + 1, input.Length - (job.Blob.Length + 1));
                             
                             byte localExtranonce = (byte)work.LocalExtranonce;
                             UInt32 startNonce;
@@ -234,7 +238,10 @@ namespace SimpleCPUMiner.Miners
 
                             searchKernel3.SetValueArgument<UInt32>(2, job.Target);
 
-                            Queue.Write<byte>(inputBuffer, true, 0, 76, (IntPtr)inputPtr, null);
+                            Queue.Write<byte>(inputBuffer, false, 0, input.Length, (IntPtr)inputPtr, events);
+                            Queue.Flush();
+                            events.Wait();
+                            events.Clear();
 
                             consoleUpdateStopwatch.Start();
 
@@ -256,30 +263,61 @@ namespace SimpleCPUMiner.Miners
                                 Stopwatch sw = new Stopwatch();
                                 sw.Start();
                                 output[255] = 0; // output[255] is used as an atomic counter.
-                                Queue.Write<UInt32>(outputBuffer, true, 0, outputSize, (IntPtr)outputPtr, null);
+                                Queue.Write<UInt32>(outputBuffer, false, 0, outputSize, (IntPtr)outputPtr, events);
+                                Queue.Flush();
+                                events.Wait();
+                                events.Clear();
                                 terminate[0] = 0;
-                                Queue.Write<Int32>(terminateBuffer, true, 0, 1, (IntPtr)terminatePtr, null);
-                                Queue.Execute(searchKernel0, globalWorkOffsetA, globalWorkSizeA, localWorkSizeA, null);
-                                Queue.Finish();
-                                if (Stopped)
-                                    break;
-                                Queue.Execute(searchKernel1, globalWorkOffsetB, globalWorkSizeB, localWorkSizeB, null);
-                                Queue.Finish();
-                                if (Stopped)
-                                    break;
-                                Queue.Execute(searchKernel2, globalWorkOffsetA, globalWorkSizeA, localWorkSizeA, null);
-                                Queue.Finish();
-                                if (Stopped)
-                                    break;
-                                Queue.Execute(searchKernel3, globalWorkOffsetB, globalWorkSizeB, localWorkSizeB, null);
-                                Queue.Finish();
+                                Queue.Write<Int32>(terminateBuffer, false, 0, 1, (IntPtr)terminatePtr, events);
+                                Queue.Flush();
+                                events.Wait();
+                                events.Clear();
+
+                                Queue.Execute(searchKernel0, globalWorkOffsetA, globalWorkSizeA, localWorkSizeA, events);
+                                Queue.Flush();
+                                events.Wait();
+                                events.Clear();
+
                                 if (Stopped)
                                     break;
 
-                                Queue.Read<UInt32>(outputBuffer, true, 0, outputSize, (IntPtr)outputPtr, null);
+                                Queue.Execute(searchKernel1, globalWorkOffsetB, globalWorkSizeB, localWorkSizeB, events);
+                                Queue.Flush();
+                                events.Wait();
+                                events.Clear();
+
+                                if (Stopped)
+                                    break;
+
+                                Queue.Execute(searchKernel2, globalWorkOffsetA, globalWorkSizeA, localWorkSizeA, events);
+                                Queue.Flush();
+                                events.Wait();
+                                events.Clear();
+
+                                if (Stopped)
+                                    break;
+
+                                Queue.Execute(searchKernel3, globalWorkOffsetB, globalWorkSizeB, localWorkSizeB, events);
+                                Queue.Flush();
+                                events.Wait();
+                                events.Clear();
+
+                                if (Stopped)
+                                    break;
+
+                                Queue.Read<UInt32>(outputBuffer, true, 0, outputSize, (IntPtr)outputPtr, events);
+                                Queue.Flush();
+                                events.Wait();
+                                events.Clear();
+
+                                if (output[0xFF] > 0xFF)
+                                {
+                                    output[0xFF] = 0xFF;
+                                }
+
                                 if (_stratum.GetJob().Equals(job))
                                 {
-                                    for (int i = 0; i < output[255]; ++i)
+                                    for (int i = 0; i < output[0xFF]; ++i)
                                     {
                                         String result = "";
                                         for (int j = 0; j < 8; ++j)
@@ -299,6 +337,7 @@ namespace SimpleCPUMiner.Miners
                                     //Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"Device #{DeviceIndex} (CryptoNight): {Speed:N2} h/s" });
                                     consoleUpdateStopwatch.Restart();
                                 }
+
                             }
                         }
                     }

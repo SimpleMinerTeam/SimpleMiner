@@ -25,7 +25,7 @@ namespace SimpleCPUMiner
 
             Coins.Add(new Coin
             {
-                Algorithm = Algorithm.CryptoNight,
+                Algorithm = Algorithm.CryptoNightV7,
                 CoinType = CoinTypes.ETN,
                 Icon = "coinElectroneum.png",
                 Name = "Electroneum",
@@ -77,10 +77,10 @@ namespace SimpleCPUMiner
             {
                 Algorithm = Algorithm.CryptoNightIpbc,
                 CoinType = CoinTypes.IPBC,
-                Icon = "coinIpbc.png",
-                Name = "InterPlanetary Broadcast Coin",
-                ShortName = "IPBC",
-                Webpage = "https://ipbc.io"
+                Icon = "coinTube.png",
+                Name = "BitTube",
+                ShortName = "TUBE",
+                Webpage = "https://coin.bit.tube"
             });
 
             Coins.Add(new Coin
@@ -220,7 +220,7 @@ namespace SimpleCPUMiner
             CryptoNightV7,
             [Description("CryptoNight Heavy")]
             CryptoNightHeavy,
-            [Description("CryptoNight IPBC")]
+            [Description("CryptoNight Tube")]
             CryptoNightIpbc,
             //[Description("CryptoNight XTL")]
             //CryptoNightXtl,

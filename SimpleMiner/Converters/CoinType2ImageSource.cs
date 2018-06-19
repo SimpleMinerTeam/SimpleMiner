@@ -29,7 +29,7 @@ namespace SimpleCPUMiner.Converters
                     return "/SimpleMiner;component/Resources/coinMonero.png";
                     break;
                 case CoinTypes.IPBC:
-                    return "/SimpleMiner;component/Resources/coinIpbc.png";
+                    return "/SimpleMiner;component/Resources/coinTube.png";
                     break;
                 case CoinTypes.KRB:
                     return "/SimpleMiner;component/Resources/coinKrb.png";

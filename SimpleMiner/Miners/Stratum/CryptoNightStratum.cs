@@ -31,34 +31,38 @@ namespace SimpleCPUMiner.Miners.Stratum
 
         public new class Job : Stratum.Job
         {
-            String mID;
-            String mStrBlob;
-            byte[] mBlob;
-            uint mTarget;
-            int mVariant;
-            ulong mDifficulty;
+            private String _strBlob;
 
-            public String ID { get { return mID; } }
-            public byte[] Blob { get { return mBlob; } }
-            public uint Target { get { return mTarget; } }
-            public int Variant { get { return mVariant; } }
-            public ulong Difficulty { get { return mDifficulty; } }
+            public String ID { get; }
+            public byte[] Blob { get; private set; }
+            public uint Target { get; private set; }
+            public int Variant { get; private set; }
+            public ulong Difficulty { get; private set; }
 
             public Job(Stratum pStratum, string pID, string pBlob, string pTarget, string pVariant)
                 : base(pStratum)
             {
-                mID = pID;
-                mStrBlob = pBlob;
+#if TEST
+                //ETN
+                _strBlob = "0606e7e2c1d80568587b00009621506f8b1b4cb0d18ad825d24c51cc44340550a86aab031f313f00000000d137ad05594fc9770631e5d6e08a1c60ba4bd12468f3543323ae456e2916e2dccf01";
+                SetBlob(_strBlob);
+                SetTarget("8b4f0100");
+                SetVariant("1");
+                ID = "272014441993087";
+#else
+                ID = pID;
+                _strBlob = pBlob;
                 SetBlob(pBlob);
                 SetTarget(pTarget);
                 SetVariant(pVariant);
+#endif
             }
 
             private bool SetBlob(String blob)
             {
                 if (!String.IsNullOrWhiteSpace(blob))
                 {
-                    mBlob = Utils.StringToByteArray(blob);
+                    Blob = Utils.StringToByteArray(blob);
                     return true;
                 }
 
@@ -71,8 +75,8 @@ namespace SimpleCPUMiner.Miners.Stratum
                 {
                     if (target.Length == 8)
                     {
-                        mTarget = BitConverter.ToUInt32(Utils.StringToByteArray(target), 0);
-                        mDifficulty = 0xFFFFFFFFFFFFFFFF / mTarget;
+                        Target = BitConverter.ToUInt32(Utils.StringToByteArray(target), 0);
+                        Difficulty = 0xFFFFFFFFFFFFFFFF / Target;
                         return true;
                     }
                 }
@@ -82,11 +86,11 @@ namespace SimpleCPUMiner.Miners.Stratum
 
             private bool SetVariant(String variant)
             {
-                mVariant = -1;
+                Variant = -1;
 
-                if (mVariant == -1)
+                if (Variant == -1)
                 {
-                    mVariant = mBlob[0];
+                    Variant = Blob[0];
                 }
 
                 return true;
@@ -94,7 +98,7 @@ namespace SimpleCPUMiner.Miners.Stratum
 
             public bool Equals(Job right)
             {
-                return mID == right.mID && mStrBlob == right.mStrBlob && mTarget == right.mTarget;
+                return ID == right.ID && _strBlob == right._strBlob && Target == right.Target;
             }
         }
 

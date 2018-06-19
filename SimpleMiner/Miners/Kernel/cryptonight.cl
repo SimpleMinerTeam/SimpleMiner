@@ -291,7 +291,7 @@ static const __constant uchar rcon[8] = { 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x
 void AESExpandKey256(uint *keybuf)
 {
     //#pragma unroll 4
-    for (uint c = 8, i = 1; c < 60; ++c)
+    for (uint c = 8, i = 1; c < 40; ++c)
     {
         // For 256-bit keys, an sbox permutation is done every other 4th uint generated, AND every 8th
         uint t = ((!(c & 7)) || ((c & 7) == 4)) ? SubWord(keybuf[c - 1]) : keybuf[c - 1];
@@ -329,7 +329,7 @@ __attribute__((reqd_work_group_size(WORKSIZE, 8, 1)))
 __kernel void search(__global ulong *input, __global uint4 *Scratchpad, __global ulong *states, const uint variant)
 {
     ulong State[STATE_SIZE];
-    uint ExpandedKey1[256];
+    uint ExpandedKey1[40];
     __local uint AES0[256], AES1[256], AES2[256], AES3[256];
     uint4 text;
 
@@ -366,6 +366,7 @@ __kernel void search(__global ulong *input, __global uint4 *Scratchpad, __global
     ((uint *)State)[10] &= 0xFF000000U;
     ((uint *)State)[10] |= ((get_global_id(0)) & 0xFFFFFFFF) >> 8;
     State[9] = (input[9] & 0x00000000FFFFFFFFUL) | 0x0000000100000000UL;
+
 
     for (int i = 10; i < 25; ++i) State[i] = 0x00UL;
 
@@ -822,7 +823,7 @@ void search3_branch0(__global ulong *states, __global uint *output, uint Target)
 
     ((uint8 *)h)[0] = vload8(0U, c_IV256);
 
-#pragma unroll 1
+#pragma unroll 4
 	for (uint i = 0, bitlen = 0; i < 4; ++i)
     {
         if (i < 3)
@@ -898,7 +899,7 @@ void search3_branch1(__global ulong *states, __global uint *output, uint Target)
 
 	State[7] = 0x0001000000000000UL;
 
-#pragma unroll 1
+#pragma unroll 4
 	for (uint i = 0; i < 4; ++i)
 	{
 		ulong H[8], M[8];
