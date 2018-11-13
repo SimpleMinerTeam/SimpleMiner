@@ -51,7 +51,8 @@ namespace SimpleCPUMiner
                     IsCPUMiningEnabled = true,
                     MaxCPUUsage = Consts.DefaultSettings.MaxCpuUsage,
                     NumberOfThreads = Consts.DefaultSettings.NumberOfThreads,
-                    StartingDelayInSec = Consts.DefaultSettings.StartingDelayInSec
+                    StartingDelayInSec = Consts.DefaultSettings.StartingDelayInSec,
+                    VersionNumber = Consts.VersionNumber
                 };
 
             WriteParameters(result);

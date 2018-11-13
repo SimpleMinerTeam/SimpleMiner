@@ -16,7 +16,7 @@ namespace SimpleCPUMiner.Model
         [XmlElement]
         public string Name { get; set; }
         [XmlElement]
-        public Algorithm? Algorithm { get; set; }
+        public int? Algorithm { get; set; }
         [XmlElement]
         public string Icon { get; set; }
         [XmlElement]

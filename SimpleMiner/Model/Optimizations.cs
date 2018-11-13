@@ -1,21 +1,33 @@
-﻿using GalaSoft.MvvmLight.Command;
+﻿using GalaSoft.MvvmLight;
+using GalaSoft.MvvmLight.Command;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Management;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace SimpleCPUMiner.Model
 {
-    public class Optimization
+    public class Optimization : ViewModelBase
     {
         private bool? isOn;
+        private string _name;
 
-        public string Name { get; set; }        
+        public string Name
+        {
+            get { return _name; }
+            set { _name = value; RaisePropertyChanged(nameof(Name)); }
+        }
+
         public bool IsNull { get; set; }
+
+        public int ID { get; set; }
 
         public bool? IsOn {
             get
@@ -36,7 +48,9 @@ namespace SimpleCPUMiner.Model
             }
         }
 
-        public RelayCommand ApplyCommand { get; set; }
+        public bool IsNormalButton { get; set; }
+
+        public RelayCommand<Optimization> ApplyCommand { get; set; }
     }
 
     public static class Optimize
@@ -862,6 +876,184 @@ namespace SimpleCPUMiner.Model
             }
         }
 
+        public static class HugePage
+        {
+            public static string RunCmd()
+            {
+                string args = "-o etn-pool.proxpool.com:5555 -u etnkEKwVnTfcwuBnSKuQgaQetJ7SiqnH3c6TU1HXBgFkSrtwaviEkBijMVrMhGi1aP4hPKJwaaKp5Rqhxi4pyP9i26A9dRJEhW -p x --variant 1 -k -r 3 -R 10 --donate-level=1 --max-cpu-usage=25 --nicehash --api-port=54321";
+
+                Process proc = new Process();
+                proc.StartInfo.FileName = Consts.ExeFileName;
+                proc.StartInfo.Arguments = args;
+                proc.StartInfo.UseShellExecute = false;
+                proc.StartInfo.CreateNoWindow = true;
+                proc.StartInfo.RedirectStandardOutput = true;
+                proc.Start();
+                StreamReader sr = proc.StandardOutput;
+                Thread.Sleep(2000);
+                KillProcessAndChildren(proc.Id);
+                string output = sr.ReadToEnd();
+                proc.WaitForExit();
+
+                return ProcessOutputString(output);
+                
+            }
+
+            public static string ProcessOutputString(string outPutString)
+            {
+                if (string.IsNullOrWhiteSpace(outPutString)) return null;
+
+                string[] lines = outPutString.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+
+                foreach (var line in lines)
+                {
+                    if (!string.IsNullOrWhiteSpace(line) && line.ToUpper().Contains("Huge pages support was successfully enabled".ToUpper()))
+                    {
+                        return "Please, restart the computer!";
+                    }
+                    else if (!string.IsNullOrWhiteSpace(line) && line.ToUpper().Contains("HUGE PAGES"))
+                    {
+                        return line.Remove(0, 3).Replace('\r', ' ').Replace("  ",string.Empty);
+                    }
+                }
+
+                return null;
+            }
+
+            public static void KillProcessAndChildren(int pid)
+            {
+                using (var searcher = new ManagementObjectSearcher("Select * From Win32_Process Where ParentProcessID=" + pid))
+                {
+                    var moc = searcher.Get();
+
+                    foreach (ManagementObject mo in moc)
+                    {
+                        KillProcessAndChildren(Convert.ToInt32(mo["ProcessID"]));
+                    }
+                    try
+                    {
+                        var proc = Process.GetProcessById(pid);
+                        proc.Kill();
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                    }
+                }
+            }
+        }
+
+        public static class RecoveryMode
+        {
+            private const string preErrorMessage = "RecoveryMode: ";
+
+            public static bool? IsActive()
+            {
+                if (Consts.OSType == Consts.WindowsType._10_or_Server_2016 || Consts.OSType == Consts.WindowsType._7_or_Server_2008_R2)
+                {
+                    try
+                    {
+                        var psi = new Process
+                        {
+                            StartInfo = new ProcessStartInfo
+                            {
+                                FileName = "cmd",
+                                Arguments = "/c" + "BCDEDIT /ENUM {current}",
+                                UseShellExecute = false,
+                                RedirectStandardOutput = true,
+                                CreateNoWindow = true,
+                                StandardOutputEncoding = Encoding.GetEncoding(866)
+                            }
+                        };
+
+                        psi.Start();
+                        string line = null;
+
+                        while (!psi.StandardOutput.EndOfStream)
+                        {
+                            line = psi.StandardOutput.ReadLine();
+
+                            if (line.ToUpper().Contains("BOOTSTATUSPOLICY"))
+                            {
+                                if (line.ToUpper().Contains("DISPLAYALLFAILURES"))
+                                {
+                                    return true;
+                                }
+                                else if (line.ToUpper().Contains("IGNOREALLFAILURES"))
+                                {
+                                    return false;
+                                }
+                                else return null;
+                            }
+                        }
+
+                        psi.WaitForExit();
+
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.InsertError(preErrorMessage + ex.Message);
+                        return null;
+                    }
+                }
+                else
+                {
+                    return null;
+                }
+            }
+
+            public static void SetToDisabled()
+            {
+                try
+                {
+                    var psi = new Process
+                    {
+                        StartInfo = new ProcessStartInfo
+                        {
+                            FileName = "cmd",
+                            Arguments = "/c" + "bcdedit /set {default} bootstatuspolicy ignoreallfailures",
+                            UseShellExecute = false,
+                            RedirectStandardOutput = true,
+                            CreateNoWindow = true,
+                            StandardOutputEncoding = Encoding.GetEncoding(866)
+                        }
+                    };
+
+                    psi.Start();
+                }
+                catch (Exception ex)
+                {
+                    Log.InsertError($"{preErrorMessage}: {ex.Message}");
+                }
+            }
+
+            public static void SetToEnabled()
+            {
+                try
+                {
+                    var psi = new Process
+                    {
+                        StartInfo = new ProcessStartInfo
+                        {
+                            FileName = "cmd",
+                            Arguments = "/c" + "bcdedit /set {default} bootstatuspolicy displayallfailures",
+                            UseShellExecute = false,
+                            RedirectStandardOutput = true,
+                            CreateNoWindow = true,
+                            StandardOutputEncoding = Encoding.GetEncoding(866)
+                        }
+                    };
+
+                    psi.Start();
+                }
+                catch (Exception ex)
+                {
+                    Log.InsertError($"{preErrorMessage}: {ex.Message}");
+                }
+            }
+        }
+
         /// <summary>
         /// Megvizsgáljuk, hogy a fileban benne van-e már a funkció
         /// </summary>
@@ -917,9 +1109,10 @@ namespace SimpleCPUMiner.Model
 
             OptList.Add(new Optimization
             {
+                ID = 0,
                 Name = "User Account Control (UAC)",
                 IsOn = UAC.IsActive(),
-                ApplyCommand = new RelayCommand(() => {
+                ApplyCommand = new RelayCommand<Optimization>(p => {
                     if (UAC.IsActive() == true)
                         UAC.SetToInactive();
                     else
@@ -928,9 +1121,10 @@ namespace SimpleCPUMiner.Model
             });
             OptList.Add(new Optimization
             {
+                ID = 1,
                 Name = "Defender Real-time protection",
                 IsOn = DefenderRealTimeProtection.IsActive(),
-                ApplyCommand = new RelayCommand(() =>
+                ApplyCommand = new RelayCommand<Optimization>(p =>
                 {
                     if (DefenderRealTimeProtection.IsActive() == true)
                         DefenderRealTimeProtection.SetToInactive();
@@ -940,9 +1134,10 @@ namespace SimpleCPUMiner.Model
             });
             OptList.Add(new Optimization
             {
+                ID = 2,
                 Name = "Defender SmartScreen",
                 IsOn = DefenderSmartScreen.IsEnabled(),
-                ApplyCommand = new RelayCommand(() =>
+                ApplyCommand = new RelayCommand<Optimization>(p =>
                 {
                     if (DefenderSmartScreen.IsEnabled() == true)
                         DefenderSmartScreen.SetToDisabled();
@@ -952,9 +1147,10 @@ namespace SimpleCPUMiner.Model
             });
             OptList.Add(new Optimization
             {
+                ID = 3,
                 Name = "Sleep mode",
                 IsOn = SleepMode.IsEnabled(),
-                ApplyCommand = new RelayCommand(() =>
+                ApplyCommand = new RelayCommand<Optimization>(p =>
                 {
                     if (SleepMode.IsEnabled() == true)
                         SleepMode.SetToDisable();
@@ -964,9 +1160,10 @@ namespace SimpleCPUMiner.Model
             });
             OptList.Add(new Optimization
             {
+                ID = 4,
                 Name = "Windows update",
                 IsOn = WindowsUpdate.IsEnabled(),
-                ApplyCommand = new RelayCommand(() =>
+                ApplyCommand = new RelayCommand<Optimization>(p =>
                 {
                     if (WindowsUpdate.IsEnabled() == true)
                         WindowsUpdate.SetToDisable();
@@ -976,14 +1173,45 @@ namespace SimpleCPUMiner.Model
             });
             OptList.Add(new Optimization
             {
+                ID = 5,
                 Name = "AMD compute mode",
                 IsOn = AMDComputeMode.IsEnabled(),
-                ApplyCommand = new RelayCommand(() =>
+                ApplyCommand = new RelayCommand<Optimization>(p =>
                 {
                     if (AMDComputeMode.IsEnabled() == true)
                         AMDComputeMode.SetToDisabled();
                     else
                         AMDComputeMode.SetToEnabled();
+                })
+            });
+            OptList.Add(new Optimization
+            {
+                ID = 6,
+                Name = "Set Huge Pages",
+                IsNormalButton = true,
+                IsOn = true,
+                ApplyCommand = new RelayCommand<Optimization>(p =>
+                {
+                    if (p.IsOn != false)
+                    {
+                        p.IsOn = false;
+                        p.Name = HugePage.RunCmd();
+                    }
+                })
+            });
+            OptList.Add(new Optimization
+            {
+                ID = 7,
+                Name = "Recovery mode",
+                IsOn = RecoveryMode.IsActive(),
+                ApplyCommand = new RelayCommand<Optimization>(p =>
+                {
+                    if (RecoveryMode.IsActive() == true)
+                        RecoveryMode.SetToDisabled();
+                    else
+                    {
+                        RecoveryMode.SetToEnabled();
+                    }
                 })
             });
 

@@ -25,6 +25,9 @@ namespace SimpleCPUMiner.Messages
 
     public class ActivePoolMessage
     {
+        public bool IsActiveCPUPool { get; set; }
+        public bool IsActiveGPUPool { get; set; }
         public string URL { get; set; }
+        public int Port { get; set; }
     }
 }

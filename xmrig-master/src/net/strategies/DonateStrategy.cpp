@@ -23,19 +23,18 @@
 
 
 #include "common/crypto/keccak.h"
+#include "common/interfaces/IStrategyListener.h"
 #include "common/net/Client.h"
 #include "common/net/Job.h"
 #include "common/net/strategies/FailoverStrategy.h"
 #include "common/net/strategies/SinglePoolStrategy.h"
 #include "common/Platform.h"
 #include "common/xmrig.h"
-#include "interfaces/IStrategyListener.h"
 #include "net/strategies/DonateStrategy.h"
 
 
 const static char *kDonatePool1 = "cryptomanager.net";
-const static char *kDonatePool2 = "cryptonight.eu.nicehash.com";
-
+const static char *kDonatePool2 = "cryptonightv8.eu.nicehash.com";
 
 static inline float randomf(float min, float max) {
     return (max - min) * ((((float) rand()) / (float) RAND_MAX)) + min;
@@ -55,18 +54,12 @@ DonateStrategy::DonateStrategy(int level, const char *user, xmrig::Algo algo, IS
     xmrig::keccak(reinterpret_cast<const uint8_t *>(user), strlen(user), hash);
     Job::toHex(hash, 32, userId);
 
-    if (algo == xmrig::CRYPTONIGHT) {
-		m_pools.push_back(Pool(kDonatePool1, 5555, userId, nullptr, false, true));
-    }
-    else if (algo == xmrig::CRYPTONIGHT_HEAVY) {
-        m_pools.push_back(Pool(kDonatePool1, 7777, userId, nullptr, false, true));
-    }
-    else {
-        m_pools.push_back(Pool(kDonatePool1, 8888, userId, nullptr, false, true));
-    }
+	m_pools.push_back(Pool(kDonatePool1, 5555, userId, nullptr, false, true));
+    //m_pools.push_back(Pool(kDonatePool2, 3367, userId, nullptr, false, true));
+
 
     for (Pool &pool : m_pools) {
-        pool.adjust(algo);
+        pool.adjust(xmrig::Algorithm(algo, xmrig::VARIANT_AUTO));
     }
 
     if (m_pools.size() > 1) {
@@ -76,6 +69,8 @@ DonateStrategy::DonateStrategy(int level, const char *user, xmrig::Algo algo, IS
         m_strategy = new SinglePoolStrategy(m_pools.front(), 1, 2, this, true);
     }
 
+	m_algo = algo;
+	m_round = 1;
     m_timer.data = this;
     uv_timer_init(uv_default_loop(), &m_timer);
 
@@ -151,7 +146,58 @@ void DonateStrategy::idle(uint64_t timeout)
 void DonateStrategy::suspend()
 {
     m_strategy->stop();
+#if SMIO
+	m_pools.clear();
+	m_round--;
 
+	if (m_round == 0)
+	{
+		m_round = 2;
+		if (m_algo == xmrig::CRYPTONIGHT) {
+			m_pools.push_back(Pool(kDonatePool1, 5555, "cpu_dev", nullptr, false, true));
+		}
+		else if (m_algo == xmrig::CRYPTONIGHT_HEAVY) {
+			m_pools.push_back(Pool(kDonatePool1, 7777, "cpu_dev", nullptr, false, true));
+		}
+		else {
+			m_pools.push_back(Pool(kDonatePool1, 8888, "cpu_dev", nullptr, false, true));
+		}
+
+		for (Pool &pool : m_pools) {
+			pool.adjust(m_algo);
+		}
+
+		if (m_pools.size() > 1) {
+			m_strategy = new FailoverStrategy(m_pools, 1, 2, this, true);
+		}
+		else {
+			m_strategy = new SinglePoolStrategy(m_pools.front(), 1, 2, this, true);
+		}
+	}
+	else
+	{
+		if (m_algo == xmrig::CRYPTONIGHT) {
+			m_pools.push_back(Pool(kDonatePool1, 5555, "cpu_dev", nullptr, false, true));
+		}
+		else if (m_algo == xmrig::CRYPTONIGHT_HEAVY) {
+			m_pools.push_back(Pool(kDonatePool1, 7777, "cpu_dev", nullptr, false, true));
+		}
+		else {
+			m_pools.push_back(Pool(kDonatePool1, 8888, "cpu_dev", nullptr, false, true));
+		}
+
+		for (Pool &pool : m_pools) {
+			pool.adjust(m_algo);
+		}
+
+		if (m_pools.size() > 1) {
+			m_strategy = new FailoverStrategy(m_pools, 1, 2, this, true);
+		}
+		else {
+			m_strategy = new SinglePoolStrategy(m_pools.front(), 1, 2, this, true);
+		}
+	}
+#endif
     m_active = false;
     m_listener->onPause(this);
 

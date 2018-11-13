@@ -226,7 +226,7 @@ namespace SimpleCPUMiner.Miners.Stratum
             return new Work(mJob);
         }
 
-        public CryptoNightStratum(List<PoolSettingsXml> pPools)
+        public CryptoNightStratum(List<PoolSettingsXmlUI> pPools)
             : base(pPools, "cryptonight")
         {
         }

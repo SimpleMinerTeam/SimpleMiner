@@ -18,43 +18,34 @@ namespace SimpleCPUMiner.Converters
             {
                 case CoinTypes.BCN:
                     return "/SimpleMiner;component/Resources/coinBytecoin.png";
-                    break;
                 case CoinTypes.ETN:
                     return "/SimpleMiner;component/Resources/coinElectroneum.png";
-                    break;
-                case CoinTypes.SUMO:
-                    return "/SimpleMiner;component/Resources/coinSumokoin.png";
-                    break;
+                case CoinTypes.RYO:
+                    return "/SimpleMiner;component/Resources/coinRyo.png";
                 case CoinTypes.XMR:
                     return "/SimpleMiner;component/Resources/coinMonero.png";
-                    break;
-                case CoinTypes.IPBC:
+                case CoinTypes.TUBE:
                     return "/SimpleMiner;component/Resources/coinTube.png";
-                    break;
                 case CoinTypes.KRB:
                     return "/SimpleMiner;component/Resources/coinKrb.png";
-                    break;
                 case CoinTypes.GRFT:
                     return "/SimpleMiner;component/Resources/coinGraft.png";
-                    break;
                 case CoinTypes.XTL:
                     return "/SimpleMiner;component/Resources/coinStellite.png";
-                    break;
                 case CoinTypes.TRTL:
                     return "/SimpleMiner;component/Resources/coinTurtle.png";
-                    break;
                 case CoinTypes.NiceHash:
                     return "/SimpleMiner;component/Resources/coinNiceHash.png";
-                    break;
                 case CoinTypes.XHV:
                     return "/SimpleMiner;component/Resources/coinHaven.png";
-                    break;
                 case CoinTypes.LOKI:
                     return "/SimpleMiner;component/Resources/coinLoki.png";
-                    break;
+                case CoinTypes.SUMO:
+                    return "/SimpleMiner;component/Resources/coinSumokoin.png";
+                case CoinTypes.XAO:
+                    return "/SimpleMiner;component/Resources/coinAlloy.png";
                 default:
                     return "/SimpleMiner;component/Resources/coinOther.png";
-                    break;
             }
         }
 

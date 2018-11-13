@@ -7,10 +7,10 @@
         xmlns:conv="clr-namespace:SimpleCPUMiner.Converters"
         mc:Ignorable="d"
         x:Name="PoolSettingWindow"
-        Title="Pool settings" Height="360" Width="300" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+        Title="Pool settings" Height="360" Width="400" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <conv:CoinType2ImageSource x:Key="CoinType2ImageSource" />
-        <conv:EnumToCollectionConverter x:Key="EnumToCollectionConverter" />
+        <conv:SupportedDeviceConverter x:Key="SupportedDeviceConverter" />
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -29,10 +29,11 @@
                         <RowDefinition Height="2*"></RowDefinition>
                     </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="3*"></ColumnDefinition>
                     <ColumnDefinition></ColumnDefinition>
-                </Grid.ColumnDefinitions>
+                    </Grid.ColumnDefinitions>
                 <Label x:Name="labelPoolAddress" Content="Pool address:" HorizontalAlignment="Left" VerticalAlignment="Center" />
-                <TextBox x:Name="tbURL" TabIndex="1" Height="23" TextWrapping="Wrap" Margin="80,3,5,0" Text="{Binding Pool.URL}" VerticalContentAlignment="Center" VerticalAlignment="Center" TextAlignment="Left"/>
+                <TextBox x:Name="tbURL" Grid.ColumnSpan="2" TabIndex="1" Height="23" TextWrapping="Wrap" Margin="80,3,5,0" Text="{Binding Pool.URL}" VerticalContentAlignment="Center" VerticalAlignment="Center" TextAlignment="Left"/>
                 <Label x:Name="labelPort" Content="Port:" Grid.Row="1"  HorizontalAlignment="Left" VerticalAlignment="Center" Width="35"/>
                 <TextBox x:Name="tbPort" TabIndex="2" Grid.Row="1" HorizontalAlignment="Left" Width="50" Height="23" MaxLength="5" Margin="35,3,5,0" VerticalContentAlignment="Center" TextWrapping="Wrap" Text="{Binding Pool.Port}" VerticalAlignment="Center" PreviewTextInput="PortPrevTextInput" TextAlignment="Center" />
                 <Label x:Name="labelWalletAddress" Grid.Row="2" Content="Wallet address:" HorizontalAlignment="Left" VerticalAlignment="Top" Width="95"/>
@@ -55,7 +56,26 @@
                 <CheckBox x:Name="cbMain" TabIndex="3" IsChecked="{Binding Pool.IsMain}" Content="Main pool" HorizontalAlignment="Left" Margin="100,0,0,0" Grid.Row="1" VerticalAlignment="Center" Checked="CheckBox_Checked" />
                 <CheckBox x:Name="cbFailOver" TabIndex="4" IsChecked="{Binding Pool.IsFailOver}" Content="Failover pool" HorizontalAlignment="Left" Margin="190,0,0,0" VerticalAlignment="Center" Grid.Row="1" Checked="cbFailOver_Checked" />
                 <Label x:Name="labelAlgo" Grid.Row="5"  Content="Algorithm variant:" HorizontalAlignment="Left" Margin="0,3,0,0" VerticalAlignment="Center"/>
-                <ComboBox x:Name="cobAlgo" Grid.Row="5" Margin="110,5,5,5" ItemsSource="{Binding Path=SelectedAlgo, Converter={StaticResource ResourceKey=EnumToCollectionConverter}, Mode=OneTime}" SelectedValuePath="Value" DisplayMemberPath="Description" SelectedValue="{Binding SelectedAlgo}" ></ComboBox>
+                    <ComboBox x:Name="cobAlgo" Grid.Row="5" Margin="110,0,5,0" ItemsSource="{Binding Algorithms}" SelectedValue="{Binding SelectedAlgo}" >
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <Label Content="{Binding Name}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <Border Grid.Column="1" Grid.Row="3" Grid.RowSpan="3" Margin="3" CornerRadius="5" BorderBrush="DarkGray" BorderThickness="1"  >
+                        <StackPanel>
+                            <TextBlock Text="Device type" HorizontalAlignment="Center" Margin="5" />
+                            <CheckBox x:Name="cbIsCPU" TabIndex="6" IsChecked="{Binding Pool.IsCPUPool}" IsEnabled="{Binding Path=SelectedAlgo, Converter={StaticResource ResourceKey=SupportedDeviceConverter}, ConverterParameter=CPU}" Margin="20,10,0,0" ToolTip="Pool enabled for CPU(s)" Padding="5,-10,0,0" VerticalAlignment="Center" Grid.Column="1" Grid.Row="3">
+                                <Image Source="/SimpleMiner;component/Resources/iconCPU.png"  Width="32px" />
+                            </CheckBox>
+                            <CheckBox x:Name="cbIsGPU" TabIndex="7" IsChecked="{Binding Pool.IsGPUPool}" IsEnabled="{Binding Path=SelectedAlgo, Converter={StaticResource ResourceKey=SupportedDeviceConverter},ConverterParameter=GPU }" Margin="20,15,0,0" ToolTip="Pool enabled for GPU(s)" Padding="5,-10,0,0" VerticalAlignment="Center" Grid.Column="1" Grid.Row="4">
+                                <Image Source="/SimpleMiner;component/Resources/iconGPU.png"  Width="32px" />
+                            </CheckBox>
+                        </StackPanel>
+                    </Border>
 
             </Grid>
         </TabItem>
@@ -76,7 +96,7 @@
                     <Label x:Name="labelName" Content="Pool name:" HorizontalAlignment="Left" VerticalAlignment="Center" />
                     <TextBox x:Name="tbName" TabIndex="11" Height="23" TextWrapping="Wrap" Margin="80,3,5,0" Text="{Binding Pool.Name}" VerticalContentAlignment="Center" VerticalAlignment="Center" TextAlignment="Left"/>
                     <Label x:Name="labelWebsite" Content="Pool website:" HorizontalAlignment="Left" VerticalAlignment="Center" Grid.Row="1" />
-                    <TextBox x:Name="tbWebsite" TabIndex="12" Height="23" TextWrapping="Wrap" Margin="80,3,5,0" Grid.Row="1" Text="{Binding Pool.Website}" VerticalContentAlignment="Center" VerticalAlignment="Center" TextAlignment="Left"/>
+                    <TextBox x:Name="tbWebsite" TabIndex="12" Height="50" VerticalAlignment="Top" TextWrapping="Wrap" Margin="80,3,5,0" Grid.Row="1" Grid.RowSpan="2" Text="{Binding Pool.Website}" VerticalContentAlignment="Top" TextAlignment="Left"/>
                 </Grid>
         </TabItem>
     </TabControl>

@@ -21,5 +21,22 @@ namespace SimpleCPUMiner
             base.OnStartup(e);
         }
 
+        private void Application_Startup(object sender, StartupEventArgs e)
+        {
+#if SMIO
+            var startupWindow = new MainWindowSMIO();
+            startupWindow.Show();
+#elif SMPoolTester
+            var startupWindow = new MainWindowPoolTester();
+            startupWindow.Show();
+#elif SMTU
+            var startupWindow = new MainWindowSMTU();
+            startupWindow.Show();
+#else
+            var startupWindow = new MainWindow();
+            startupWindow.Show();
+#endif
+
+        }
     }
 }

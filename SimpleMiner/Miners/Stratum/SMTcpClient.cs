@@ -15,7 +15,7 @@ namespace SimpleCPUMiner.Miners.Stratum
     {
         public int ErrorCount { get; set; }
         public int ID { get; set; }
-        public PoolSettingsXml Pool { get; set; }
+        public PoolSettingsXmlUI Pool { get; set; }
         private TcpClient _client;
         private IPHostEntry ip;
 
@@ -34,7 +34,9 @@ namespace SimpleCPUMiner.Miners.Stratum
                 _client = new TcpClient(Pool.URL, Pool.Port);
 
             if (ID>-1)
-                Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"Connecting to {Pool.URL}:{Pool.Port}" });
+                Messenger.Default.Send(new MinerOutputMessage() { OutputText = $"Connecting to {Pool.URL}:{Pool.Port}" });
+
+            Messenger.Default.Send(new ActivePoolMessage() { IsActiveCPUPool = false, IsActiveGPUPool = true, URL = Pool.URL, Port = Pool.Port });
 
             _client.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
         }

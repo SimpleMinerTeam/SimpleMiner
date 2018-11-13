@@ -4,9 +4,6 @@ using SimpleCPUMiner.Model;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static SimpleCPUMiner.Consts;
 
 namespace SimpleCPUMiner
@@ -19,12 +16,12 @@ namespace SimpleCPUMiner
 
             try
             {
-                if (!File.Exists(Consts.PoolFilePath))
+                if (!File.Exists(PoolFilePath))
                 {
-                    if (File.Exists(Consts.PoolFilePathOld))
+                    if (File.Exists(PoolFilePathOld))
                     {
                         //ilyenkor kell migrálnunk
-                        var poolzToLoad = Utils.DeSerializeObject<List<PoolSettings>>(Consts.PoolFilePathOld);
+                        var poolzToLoad = Utils.DeSerializeObject<List<PoolSettings>>(PoolFilePathOld);
                         if (poolzToLoad != null && poolzToLoad.Count > 0)
                         {
                             poolList = new List<PoolSettingsXml>();
@@ -51,6 +48,7 @@ namespace SimpleCPUMiner
                     else
                     {
                         poolList = setDefaultPool();
+                        IsGenerateDefaultPoolList = true;
                     }
                 }
                 else
@@ -79,7 +77,7 @@ namespace SimpleCPUMiner
         {
             List<PoolSettingsXml> poolList = new List<PoolSettingsXml>();
 
-            poolList = Utils.XmlDeserialize<List<PoolSettingsXml>>(Consts.PoolFilePath);
+            poolList = Utils.XmlDeserialize<List<PoolSettingsXml>>(PoolFilePath);
 
             return poolList;
         }
@@ -106,7 +104,7 @@ namespace SimpleCPUMiner
                 Password = DefaultSettings.Password,
                 Name = "supportXMR",
                 Website = "https://supportxmr.com/#/home",
-                Algorithm = Algorithm.CryptoNightV7
+                Algorithm = ((int)SupportedAlgos.CryptoNight_V8).ToString()
             });
 
             Pools.Add(new PoolSettingsXml()
@@ -124,7 +122,7 @@ namespace SimpleCPUMiner
                 Password = DefaultSettings.Password,
                 Name = "Proxpool (ETN)",
                 Website = "http://etn.proxpool.com/",
-                Algorithm = Algorithm.CryptoNight
+                Algorithm = ((int)SupportedAlgos.CryptoNight).ToString()
             });
 
             Pools.Add(new PoolSettingsXml()
@@ -140,14 +138,14 @@ namespace SimpleCPUMiner
                 Port = 4444,
                 Username = "",
                 Password = DefaultSettings.Password,
-                Name = "Sumokoin Pool",
+                Name = "Ryo Pool",
                 Website = "http://miner-coin.eu/sumokoin/",
-                Algorithm = Algorithm.CryptoNightHeavy
+                Algorithm = ((int)SupportedAlgos.CryptoNight_Heavy).ToString()
             });
 
             Pools.Add(new PoolSettingsXml()
             {
-                ID = 4,
+                ID = 3,
                 CoinType = CoinTypes.KRB,
                 IsCPUPool = true,
                 IsGPUPool = true,
@@ -160,12 +158,12 @@ namespace SimpleCPUMiner
                 Password = DefaultSettings.Password,
                 Name = "Miner.Rocks (KRB)",
                 Website = "https://krb.miner.rocks/",
-                Algorithm = Algorithm.CryptoNight
+                Algorithm = ((int)SupportedAlgos.CryptoNight).ToString()
             });
 
             Pools.Add(new PoolSettingsXml()
             {
-                ID = 5,
+                ID = 4,
                 CoinType = CoinTypes.GRFT,
                 IsCPUPool = true,
                 IsGPUPool = true,
@@ -178,12 +176,12 @@ namespace SimpleCPUMiner
                 Password = DefaultSettings.Password,
                 Name = "Miner.Rocks (GRFT)",
                 Website = "https://graft.miner.rocks/",
-                Algorithm = Algorithm.CryptoNightV7
+                Algorithm = ((int)SupportedAlgos.CryptoNight_V7).ToString()
             });
 
             Pools.Add(new PoolSettingsXml()
             {
-                ID = 6,
+                ID = 5,
                 CoinType = CoinTypes.XTL,
                 IsCPUPool = true,
                 IsGPUPool = true,
@@ -196,12 +194,12 @@ namespace SimpleCPUMiner
                 Password = DefaultSettings.Password,
                 Name = "Miner.Rocks (XTL)",
                 Website = "https://stellite.miner.rocks/",
-                Algorithm = Algorithm.CryptoNightV7
+                Algorithm = ((int)SupportedAlgos.CryptoNight_Stellite_V4).ToString()
             });
 
             Pools.Add(new PoolSettingsXml()
             {
-                ID = 7,
+                ID = 6,
                 CoinType = CoinTypes.LOKI,
                 IsCPUPool = true,
                 IsGPUPool = true,
@@ -214,29 +212,10 @@ namespace SimpleCPUMiner
                 Password = DefaultSettings.Password,
                 Name = "Miner.Rocks (LOKI)",
                 Website = "https://loki.miner.rocks/",
-                Algorithm = Algorithm.CryptoNightHeavy
-            });
-
-            Pools.Add(new PoolSettingsXml()
-            {
-                ID = 8,
-                CoinType = CoinTypes.XHV,
-                IsCPUPool = true,
-                IsGPUPool = true,
-                IsFailOver = false,
-                IsMain = false,
-                IsRemoveable = true,
-                URL = "haven.miner.rocks",
-                Port = 5555,
-                Username = "",
-                Password = DefaultSettings.Password,
-                Name = "Miner.Rocks (XHV)",
-                Website = "https://haven.miner.rocks/",
-                Algorithm = Algorithm.CryptoNightHeavy
+                Algorithm = ((int)SupportedAlgos.CryptoNight_Heavy).ToString()
             });
 
             return Pools;
         }
-
     }
 }

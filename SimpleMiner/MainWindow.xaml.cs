@@ -33,11 +33,13 @@ namespace SimpleCPUMiner
             if (vm.SelectedMinerSettings.IsMinimizeToTray == true || vm.SelectedMinerSettings.ApplicationMode.Equals(Consts.ApplicationMode.Silent, StringComparison.InvariantCultureIgnoreCase)) this.WindowState = WindowState.Minimized;
             this.DataContext = vm;
             tcMaintabs.SelectedIndex = 0;
+
             timer = new DispatcherTimer();
             timer.Tick += Timer_Tick;
             timer.Interval = new TimeSpan(24, 0, 0);
             timer.Start();
-            if (vm.CustomSettings == null || string.IsNullOrEmpty(vm.CustomSettings.MainWindowTitle))
+
+            if (vm.CustomSettings == null || string.IsNullOrWhiteSpace(vm.CustomSettings.MainWindowTitle))
             {
 #if DEBUG
                 vm.MainWindowTitle = "Simple Miner " + Consts.VersionNumber + " - DEBUG MODE!!!";
@@ -64,6 +66,10 @@ namespace SimpleCPUMiner
                     wbContent.Source = new Uri($"http://cryptomanager.net/minernotification.aspx?v={Consts.VersionNumber}&h={vm.Speed}");
                     Log.InsertError(ex.Message);
                 }
+
+#if X86
+            tabGPU.Visibility = Visibility.Collapsed;
+#endif
         }
 
         private void Timer_Tick(object sender, EventArgs e)

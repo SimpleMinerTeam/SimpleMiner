@@ -1,12 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Serialization;
 using static SimpleCPUMiner.Consts;
-using static SimpleCPUMiner.ViewModel.MainViewModel;
 
 namespace SimpleCPUMiner.Model
 {
@@ -21,13 +16,12 @@ namespace SimpleCPUMiner.Model
             get { return _url; }
             set
             {
-                if(value.Contains(":"))
+                if(value != null && value.Contains(":"))
                 {
                     var st = value.Split(new char[] { ':' },  StringSplitOptions.RemoveEmptyEntries);
                     if(st.Length==2)
                     {
-                        int port = 0;
-                        if (int.TryParse(st[1], out port))
+                        if (int.TryParse(st[1], out int port))
                         {
                             Port = port;
                             _url = st[0];
@@ -52,9 +46,31 @@ namespace SimpleCPUMiner.Model
         [XmlElement]
         public string Password { get; set; } //password for mining server
         [XmlElement]
-        public bool IsCPUPool { get; set; }
+        public bool IsCPUPool
+        {
+            get
+            {
+                return _isCPUPool;
+            }
+            set
+            {
+                _isCPUPool = value;
+                NotifyPropertyChanged(nameof(IsCPUPool));
+            }
+        }
         [XmlElement]
-        public bool IsGPUPool { get; set; }
+        public bool IsGPUPool
+        {
+            get
+            {
+                return _isGPUPool;
+            }
+            set
+            {
+                _isGPUPool = value;
+                NotifyPropertyChanged(nameof(IsGPUPool));
+            }
+        }
         [XmlElement]
         public bool IsFailOver { get; set; }
         [XmlElement]
@@ -74,12 +90,14 @@ namespace SimpleCPUMiner.Model
         [XmlElement]
         public string StatUrl { get; set; }
         [XmlElement]
-        public Consts.Algorithm? Algorithm { get; set; }
+        public string Algorithm { get; set; }
 
         private string _url;
+        private bool _isCPUPool;
+        private bool _isGPUPool;
 
         public event PropertyChangedEventHandler PropertyChanged;
-        private void NotifyPropertyChanged(String propertyName)
+        internal void NotifyPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

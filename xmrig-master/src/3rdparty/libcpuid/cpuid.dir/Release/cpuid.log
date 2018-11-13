@@ -1,0 +1,9 @@
+﻿  Building Custom Rule C:/xmrig-master/src/3rdparty/libcpuid/CMakeLists.txt
+  CMake does not need to re-run because C:/xmrig-master/src/3rdparty/libcpuid/CMakeFiles/generate.stamp is up-to-date.
+  cpuid_main.c
+  asm-bits.c
+  recog_amd.c
+  recog_intel.c
+  libcpuid_util.c
+  LINK : MSIL .netmodule or module compiled with /GL found; restarting link with /LTCG; add /LTCG to the link command line to improve linker performance
+  cpuid.vcxproj -> C:\xmrig-master\src\3rdparty\libcpuid\Release\cpuid.lib

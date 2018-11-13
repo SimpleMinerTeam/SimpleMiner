@@ -71,8 +71,8 @@ namespace SimpleCPUMiner.Miners
             _stratum = pStratum;
             _coin = Consts.Coins.Where(x => x.CoinType == _stratum.ActiveClient.Pool.CoinType).FirstOrDefault();
 
-            if((_stratum.ActiveClient.Pool.Algorithm != null && _stratum.ActiveClient.Pool.Algorithm == Consts.Algorithm.CryptoNightHeavy)
-                || (_stratum.ActiveClient.Pool.Algorithm == null && _coin.Algorithm == Consts.Algorithm.CryptoNightHeavy))
+            if((Utils.MigrateAlgorithm(_stratum.ActiveClient.Pool.Algorithm) == (int)Consts.SupportedAlgos.CryptoNight_Heavy)
+                || (_coin.Algorithm == (int)Consts.SupportedAlgos.CryptoNight_Heavy))
                 globalWorkSizeA[0] = globalWorkSizeB[0] = Utils.NearestEven(pRawIntensity * pLocalWorkSize/2); 
             else
                 globalWorkSizeA[0] = globalWorkSizeB[0] = pRawIntensity * pLocalWorkSize;
@@ -111,29 +111,37 @@ namespace SimpleCPUMiner.Miners
                 return;
             }
 
-            Consts.Algorithm? algo = _stratum.ActiveClient.Pool.Algorithm;
+            int? algo = Utils.MigrateAlgorithm(_stratum.ActiveClient.Pool.Algorithm);
             if (algo == null)
                 algo = _coin.Algorithm;
 
             switch (algo)
             {
-                case Consts.Algorithm.CryptoNight:
-                case Consts.Algorithm.CryptoNightV7:
+                case (int)Consts.SupportedAlgos.CryptoNight:
+                case (int)Consts.SupportedAlgos.CryptoNight_V7:
                     programName = "cryptonight";
                     scratchpadsBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite, ((long)1 << 21) * globalWorkSizeA[0]);
                     break;
-                case Consts.Algorithm.CryptoNightHeavy:
+                case (int)Consts.SupportedAlgos.CryptoNight_V8:
+                    programName = "cryptonightV8";
+                    scratchpadsBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite, ((long)1 << 21) * globalWorkSizeA[0]);
+                    break;
+                case (int)Consts.SupportedAlgos.CryptoNight_Heavy:
                     programName = "cryptonightHeavy";
                     scratchpadsBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite, ((long)1 << 22) * globalWorkSizeA[0]);
                     break;
-                case Consts.Algorithm.CryptoNightLite:
-                case Consts.Algorithm.CryptoNightLiteV1:
+                case (int)Consts.SupportedAlgos.CryptoNight_Lite:
+                case (int)Consts.SupportedAlgos.CryptoNight_Lite_V7:
                     programName = "cryptonightLite";
                     scratchpadsBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite, ((long)1 << 20) * globalWorkSizeA[0]);
                     break;
-                case Consts.Algorithm.CryptoNightIpbc:
+                case (int)Consts.SupportedAlgos.CryptoNight_BitTube_V2:
                     programName = "cryptonightIpbc";
                     scratchpadsBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite, ((long)1 << 20) * globalWorkSizeA[0]);
+                    break;
+                case (int)Consts.SupportedAlgos.CryptoNight_Fast:
+                    programName = "cryptonightFast";
+                    scratchpadsBuffer = new ComputeBuffer<byte>(Context, ComputeMemoryFlags.ReadWrite, ((long)1 << 21) * globalWorkSizeA[0]);
                     break;
             }
 
@@ -214,16 +222,16 @@ namespace SimpleCPUMiner.Miners
                                 startNonce = ((UInt32)localExtranonce << (8 * 3)) | (UInt32)(r.Next(0, int.MaxValue) & (0x00ffffffu));
                             }
 
-                            if ((_stratum.ActiveClient.Pool.Algorithm!=null && (_stratum.ActiveClient.Pool.Algorithm == Consts.Algorithm.CryptoNight || _stratum.ActiveClient.Pool.Algorithm == Consts.Algorithm.CryptoNightLite))
-                                ||(_stratum.ActiveClient.Pool.Algorithm == null && (_coin.Algorithm == Consts.Algorithm.CryptoNight
-                                || _coin.Algorithm == Consts.Algorithm.CryptoNightLite)))
+                            if ((_stratum.ActiveClient.Pool.Algorithm!=null && (Utils.MigrateAlgorithm(_stratum.ActiveClient.Pool.Algorithm) == (int)Consts.SupportedAlgos.CryptoNight || Utils.MigrateAlgorithm(_stratum.ActiveClient.Pool.Algorithm) == (int)Consts.SupportedAlgos.CryptoNight_Lite))
+                                ||(_stratum.ActiveClient.Pool.Algorithm == null && (_coin.Algorithm == (int)Consts.SupportedAlgos.CryptoNight
+                                || _coin.Algorithm == (int)Consts.SupportedAlgos.CryptoNight_Lite)))
                             {
                                 searchKernel0.SetValueArgument<uint>(3, 0);
                                 searchKernel1.SetValueArgument<uint>(3, 0);
                                 searchKernel2.SetValueArgument<uint>(2, 0);
                             }
-                            else if((_stratum.ActiveClient.Pool.Algorithm != null && (_stratum.ActiveClient.Pool.Algorithm == Consts.Algorithm.CryptoNightLiteV1 || _stratum.ActiveClient.Pool.Algorithm == Consts.Algorithm.CryptoNightV7 || _stratum.ActiveClient.Pool.Algorithm == Consts.Algorithm.CryptoNightIpbc))
-                                || (_stratum.ActiveClient.Pool.Algorithm == null && (_coin.Algorithm == Consts.Algorithm.CryptoNightLiteV1 || _coin.Algorithm == Consts.Algorithm.CryptoNightV7 || _coin.Algorithm == Consts.Algorithm.CryptoNightIpbc)))
+                            else if((_stratum.ActiveClient.Pool.Algorithm != null && Consts.V7Coins.Any(x => (int)x == Utils.MigrateAlgorithm(_stratum.ActiveClient.Pool.Algorithm)))
+                                || (_stratum.ActiveClient.Pool.Algorithm == null && Consts.V7Coins.Any(x => (int)x == _coin.Algorithm)))
                             {
                                 searchKernel0.SetValueArgument<uint>(3, 7);
                                 searchKernel1.SetValueArgument<uint>(3, 7);

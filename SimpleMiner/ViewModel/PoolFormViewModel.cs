@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using static SimpleCPUMiner.Consts;
 
@@ -14,26 +13,70 @@ namespace SimpleCPUMiner.ViewModel
 {
     public class PoolFormViewModel : ViewModelBase
     {
-        public PoolSettingsXml Pool { get; set; }
+        public PoolSettingsXmlUI Pool { get; set; }
         public RelayCommand<Window> CancelCommand { get; private set; }
         public RelayCommand<Window> SaveCommand { get; private set; }
-        public Action<PoolSettingsXml> AddPool;
-        public Action<PoolSettingsXml> UpdatePoolList;
+        public Action<PoolSettingsXmlUI> AddPool;
+        public Action<PoolSettingsXmlUI> UpdatePoolList;
         public List<Coin> CoinList { get; set; }
-        public Consts.Algorithm? SelectedAlgo { get; set; }
+        public List<Algo> Algorithms { get; set; }
+        private Algo _selectedAlgo { get; set; }
         private Coin _selectedCoin;
 
         public Coin SelectedCoin
         {
             get { return _selectedCoin; }
-            set { _selectedCoin = value; SelectedAlgo = SelectedCoin.Algorithm; RaisePropertyChanged(nameof(SelectedAlgo)); }
+            set
+            {
+                _selectedCoin = value;
+
+                if (_selectedCoin == null)
+                {
+                    _selectedCoin = new Coin
+                    {
+                        CoinType = CoinTypes.OTHER,
+                        Icon = "coinOther.png",
+                        ShortName = "OTHER"
+                    };
+
+                    SelectedAlgo = Algorithms.Where(x => x.ID == (int)SupportedAlgos.CryptoNight).FirstOrDefault();
+                }
+                else
+                {
+                    SelectedAlgo = Algorithms.Where(x => x.ID == SelectedCoin.Algorithm).FirstOrDefault();
+                }
+
+                RaisePropertyChanged(nameof(SelectedAlgo));
+            }
+        }
+
+        public Algo SelectedAlgo
+        {
+            get { return _selectedAlgo; }
+
+            set
+            {
+                _selectedAlgo = value;
+
+                if (!_selectedAlgo.IsCpuSupport)
+                {
+                    Pool.IsCPUPool = false;
+                }
+                if (!_selectedAlgo.IsGpuSupport)
+                {
+                    Pool.IsGPUPool = false;
+                }
+
+                RaisePropertyChanged(nameof(SelectedAlgo));
+            }
         }
 
         public PoolFormViewModel()
         {
             CancelCommand = new RelayCommand<Window>(Cancel);
             SaveCommand = new RelayCommand<Window>(Save);
-            CoinList = Consts.Coins;
+            CoinList = Coins;
+            Algorithms = Consts.Algorithms;
         }
 
         public void RefreshUI()
@@ -44,11 +87,11 @@ namespace SimpleCPUMiner.ViewModel
         private void Save(Window obj)
         {
             Pool.CoinType = SelectedCoin.CoinType;
-            Pool.Algorithm = SelectedAlgo;
+            Pool.Algorithm = SelectedAlgo.ID.ToString();
             StringBuilder error = new StringBuilder();
 
-            if (String.IsNullOrEmpty(Pool.URL))
-                error.AppendLine("Warning pool address is empty!");
+            if (string.IsNullOrEmpty(Pool.URL))
+                error.AppendLine("Warning! Pool address is empty!");
 
             if (Pool.IsMain || Pool.IsFailOver)
             {
@@ -58,19 +101,19 @@ namespace SimpleCPUMiner.ViewModel
                 }
                 catch
                 {
-                    error.AppendLine("Warning pool address is incorrect or unreachable, it may cause application hang!");
+                    error.AppendLine("Warning! Pool address is incorrect or unreachable, it may cause application hang!");
                 }
             }
 
-            if (String.IsNullOrEmpty(Pool.Username))
-                error.AppendLine("Warning wallet address is empty!");
+            if (string.IsNullOrEmpty(Pool.Username))
+                error.AppendLine("Warning! Wallet address is empty!");
             else
                 Pool.Username = Utils.RemoveWhitespace(Pool.Username);
 
             if (Pool.Port<1)
                 error.AppendLine("The port field has an invalid value!");
 
-            if (String.IsNullOrEmpty(Pool.Name))
+            if (string.IsNullOrEmpty(Pool.Name))
                 Pool.Name = Pool.URL;
 
             if(error.Length>0)

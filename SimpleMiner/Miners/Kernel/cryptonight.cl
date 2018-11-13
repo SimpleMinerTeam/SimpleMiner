@@ -15,7 +15,7 @@ uint amd_bfe(uint src0, uint src1, uint src2)
 #endif
 #define BYTE(x, y)	(amd_bfe((x), (y) << 3U, 8U))
 
-#if !defined(CRYPTONIGHT_HEAVY) && !defined(CRYPTONIGHT_LIGHT) && !defined(CRYPTONIGHT_IPBC)
+#if !defined(CRYPTONIGHT_HEAVY) && !defined(CRYPTONIGHT_LIGHT) && !defined(CRYPTONIGHT_IPBC) && !defined(CRYPTONIGHT_FAST) && !defined(CRYPTONIGHT_HAVEN)
 #define MEMORY (2UL * 1024 * 1024)
 #define MASK 0x1FFFF0
 #define ITERATIONS 0x80000
@@ -291,7 +291,7 @@ static const __constant uchar rcon[8] = { 0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x
 void AESExpandKey256(uint *keybuf)
 {
     //#pragma unroll 4
-    for (uint c = 8, i = 1; c < 40; ++c)
+    for (uint c = 8, i = 1; c < 60; ++c)
     {
         // For 256-bit keys, an sbox permutation is done every other 4th uint generated, AND every 8th
         uint t = ((!(c & 7)) || ((c & 7) == 4)) ? SubWord(keybuf[c - 1]) : keybuf[c - 1];
@@ -329,7 +329,7 @@ __attribute__((reqd_work_group_size(WORKSIZE, 8, 1)))
 __kernel void search(__global ulong *input, __global uint4 *Scratchpad, __global ulong *states, const uint variant)
 {
     ulong State[STATE_SIZE];
-    uint ExpandedKey1[40];
+    uint ExpandedKey1[256];
     __local uint AES0[256], AES1[256], AES2[256], AES3[256];
     uint4 text;
 
@@ -392,7 +392,7 @@ __kernel void search(__global ulong *input, __global uint4 *Scratchpad, __global
 
     mem_fence(CLK_LOCAL_MEM_FENCE);
 
-#ifdef CRYPTONIGHT_HEAVY
+#ifdef CRYPTONIGHT_HEAVY || CRYPTONIGHT_HAVEN
     if (variant >= 3) {
         __local uint4 xin[8][WORKSIZE];
         /* Also left over threads performe this loop.
@@ -412,7 +412,7 @@ __kernel void search(__global ulong *input, __global uint4 *Scratchpad, __global
 
     if (gIdx < get_global_size(0)) {
         int iterations = MEMORY >> 7;
-#ifdef CRYPTONIGHT_HEAVY
+#ifdef CRYPTONIGHT_HEAVY || CRYPTONIGHT_HAVEN
         if (variant < 3)
             iterations >>= 1;
 #endif
@@ -465,7 +465,7 @@ __kernel void search1(__global uint4 *Scratchpad, __global ulong *states, __glob
 
     mem_fence(CLK_LOCAL_MEM_FENCE);
 
-	#ifndef CRYPTONIGHT_HEAVY
+	#ifndef CRYPTONIGHT_HEAVY && CRYPTONIGHT_HAVEN
 	VARIANT1_INIT();
 	#endif
 
@@ -475,7 +475,7 @@ __kernel void search1(__global uint4 *Scratchpad, __global ulong *states, __glob
         ulong mask = MASK;
         int iterations = ITERATIONS;
 
-#ifdef CRYPTONIGHT_HEAVY
+#ifdef CRYPTONIGHT_HEAVY || CRYPTONIGHT_HAVEN
         if (variant < 3) {
             iterations <<= 1;
             mask -= 0x200000;
@@ -494,7 +494,7 @@ __kernel void search1(__global uint4 *Scratchpad, __global ulong *states, __glob
 		
 			b_x ^= ((uint4 *)c)[0];
 		
-			#ifndef CRYPTONIGHT_HEAVY
+			#ifndef CRYPTONIGHT_HEAVY && CRYPTONIGHT_HAVEN
 			VARIANT1_1(b_x);
 			#endif
 
@@ -506,13 +506,13 @@ __kernel void search1(__global uint4 *Scratchpad, __global ulong *states, __glob
 			a[1] += c[0] * as_ulong2(tmp).s0;
 			a[0] += mul_hi(c[0], as_ulong2(tmp).s0);
 
-			#ifndef CRYPTONIGHT_HEAVY
+			#ifndef CRYPTONIGHT_HEAVY && CRYPTONIGHT_HAVEN
 			VARIANT1_2(a[1]);
 			#endif
         
 			Scratchpad[IDX((c[0] & mask) >> 4)] = ((uint4 *)a)[0];
 
-			#ifndef CRYPTONIGHT_HEAVY
+			#ifndef CRYPTONIGHT_HEAVY && CRYPTONIGHT_HAVEN
 			VARIANT1_2(a[1]);
 			#endif
 
@@ -536,6 +536,14 @@ __kernel void search1(__global uint4 *Scratchpad, __global ulong *states, __glob
 				*((__global long*)(Scratchpad + (IDX((idx0 & mask) >> 4)))) = n ^ q;
 				idx0 = d ^ q;
 			}
+			#endif
+
+			#ifdef CRYPTONIGHT_HAVEN
+			long n = *((__global long*)(Scratchpad + (IDX((idx0 & mask) >> 4))));
+			int d = ((__global int*)(Scratchpad + (IDX((idx0 & mask) >> 4))))[2];
+			long q = n / (d | 0x5);
+			*((__global long*)(Scratchpad + (IDX((idx0 & mask) >> 4)))) = n ^ q;
+			idx0 = (~d) ^ q;
 			#endif
 		}
     }
@@ -593,13 +601,13 @@ __kernel void search2(__global uint4 *Scratchpad, __global ulong *states, const 
 
     barrier(CLK_LOCAL_MEM_FENCE);
 
-#ifdef CRYPTONIGHT_HEAVY
+#ifdef CRYPTONIGHT_HEAVY || CRYPTONIGHT_HAVEN
     __local uint4 xin[8][WORKSIZE];
 #endif
 
     if (gIdx < get_global_size(0)) {
         int iterations = MEMORY >> 7;
-#ifdef CRYPTONIGHT_HEAVY
+#ifdef CRYPTONIGHT_HEAVY || CRYPTONIGHT_HAVEN
         if (variant < 3) {
             iterations >>= 1;
 
@@ -649,7 +657,7 @@ __kernel void search2(__global uint4 *Scratchpad, __global ulong *states, const 
 #endif
     }
 
-#ifdef CRYPTONIGHT_HEAVY
+#ifdef CRYPTONIGHT_HEAVY || CRYPTONIGHT_HAVEN
     if (variant >= 3) {
         /* Also left over threads performe this loop.
         * The left over thread results will be ignored
@@ -823,7 +831,7 @@ void search3_branch0(__global ulong *states, __global uint *output, uint Target)
 
     ((uint8 *)h)[0] = vload8(0U, c_IV256);
 
-#pragma unroll 4
+#pragma unroll 1
 	for (uint i = 0, bitlen = 0; i < 4; ++i)
     {
         if (i < 3)
@@ -899,7 +907,7 @@ void search3_branch1(__global ulong *states, __global uint *output, uint Target)
 
 	State[7] = 0x0001000000000000UL;
 
-#pragma unroll 4
+#pragma unroll 1
 	for (uint i = 0; i < 4; ++i)
 	{
 		ulong H[8], M[8];

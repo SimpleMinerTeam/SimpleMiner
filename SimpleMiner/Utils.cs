@@ -29,6 +29,8 @@ using System.Xml.Serialization;
 using Ionic.Zip;
 using System.Globalization;
 using System.ComponentModel;
+using System.Net;
+using System.Net.Sockets;
 
 namespace SimpleCPUMiner
 {
@@ -99,6 +101,23 @@ namespace SimpleCPUMiner
             }
         }
 
+        /// <summary>
+        /// XML serialize to string.
+        /// </summary>
+        /// <typeparam name="T">Type of the object</typeparam>
+        /// <param name="o">The object to serialize.</param>
+        /// <returns></returns>
+        public static string XmlSerialize<T>(T o)
+        {
+            var serializer = new XmlSerializer(o.GetType());
+
+            using (MemoryStream ms = new MemoryStream())
+            {
+                serializer.Serialize(ms, o);
+                return Encoding.ASCII.GetString(ms.ToArray());
+            }  
+        }
+
         public static T XmlDeserialize<T>(string filename)
         {
             try
@@ -111,10 +130,32 @@ namespace SimpleCPUMiner
                     return result;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Log.InsertError($"Deserialize ERROR: {ex.Message}");
                 MessageBox.Show("Corrupted config file\n The program will use default settings.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return default(T);
+            }
+        }
+
+
+        /// <summary>
+        /// XML deserialize to string.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="toDeserialize">String to deserialize.</param>
+        /// <returns></returns>
+        public static T XmlDeserializeString<T>(string toDeserialize)
+        {
+            T result;
+            var serializer = new XmlSerializer(typeof(T));
+
+            using (MemoryStream ms = new MemoryStream(toDeserialize.Length))
+            {
+                ms.Write(Encoding.ASCII.GetBytes(toDeserialize), 0, toDeserialize.Length);
+                ms.Seek(0, SeekOrigin.Begin);
+                result = (T)serializer.Deserialize(ms);
+                return result;
             }
         }
 
@@ -265,6 +306,20 @@ namespace SimpleCPUMiner
                 return InstallDetail.CannotInstall;
 #endif
             }
+        }
+
+        public static IPAddress LocalIPAddress()
+        {
+            if (!System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable())
+            {
+                return null;
+            }
+
+            IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
+
+            return host
+                .AddressList
+                .FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
         }
 
         public static void StartProcess(string name, string args)
@@ -656,6 +711,41 @@ namespace SimpleCPUMiner
                 return Consts.WindowsType._7_or_Server_2008_R2;
             else                                            //Other Windows
                 return Consts.WindowsType.Other;
+        }
+
+        /// <summary>
+        /// Migrates the algorithm.
+        /// </summary>
+        public static int MigrateAlgorithm(string _algorithm)
+        {
+            if (Int32.TryParse(_algorithm, out int n))
+            {
+                return n;
+            }
+            else
+            {
+                switch (_algorithm)
+                {
+                    case "CryptoNight":
+                        return 0;
+                    case "CryptoNightLite":
+                        return 2;
+                    case "CryptoNightLiteV1":
+                        return 3;
+                    case "CryptoNightV7":
+                        return 1;
+                    case "CryptoNightHeavy":
+                        return 4;
+                    case "CryptoNightFast":
+                        return 5;
+                    case "CryptoNightV8":
+                        return 7;
+                    case "CryptoNightIpbc":
+                        return 6;
+                    default:
+                        return 0;
+                }
+            }
         }
     }
 

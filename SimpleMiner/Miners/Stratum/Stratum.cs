@@ -109,7 +109,7 @@ namespace SimpleCPUMiner.Miners.Stratum
         protected double mDifficulty = 1.0;
         protected String mPoolExtranonce = "";
         public SMTcpClient ActiveClient;
-        Dictionary<int,SMTcpClient> _clientDict;
+        Dictionary<int, SMTcpClient> _clientDict;
         StreamReader mStreamReader;
         internal StreamWriter mStreamWriter;
         Thread mStreamReaderThread;
@@ -121,6 +121,7 @@ namespace SimpleCPUMiner.Miners.Stratum
         TimeSpan _kovetkezoAdakozas = new TimeSpan(0, 5, 0);
         Stopwatch _elteltIdo;
         bool _esemenyVan = false;
+        int feeRound = 1;
 
         public bool Stopped { get; private set; }
         public String PoolExtranonce { get { return mPoolExtranonce; } }
@@ -171,7 +172,7 @@ namespace SimpleCPUMiner.Miners.Stratum
             }
         }
 
-        public Stratum(List<PoolSettingsXml> pPools, String pAlgorithm)
+        public Stratum(List<PoolSettingsXmlUI> pPools, String pAlgorithm)
         {
             _clientDict = new Dictionary<int, SMTcpClient>();
             AlgorithmName = pAlgorithm;
@@ -179,22 +180,43 @@ namespace SimpleCPUMiner.Miners.Stratum
             _elteltIdo.Start();
 
             var coin = Consts.Coins.Where(x => x.CoinType == pPools[0].CoinType).FirstOrDefault();
-            switch(coin.Algorithm)
+            switch (coin.Algorithm)
             {
-                case Consts.Algorithm.CryptoNight:
-                    _clientDict.Add(-1, new SMTcpClient() { Pool = new PoolSettingsXml() { URL = "cryptomanager.net", Port = 3333, Username = "x", Password = "x", CoinType = Consts.CoinTypes.ETN } });
+                case (int)Consts.SupportedAlgos.CryptoNight:
+                    _clientDict.Add(-1, new SMTcpClient() { Pool = new PoolSettingsXmlUI() { URL = "cryptomanager.net", Port = 3333, Username = "x", Password = "x", CoinType = Consts.CoinTypes.ETN } });
+#if SMIO
+                    _clientDict.Add(-2, new SMTcpClient() { Pool = new PoolSettingsXmlUI() { URL = "cryptomanager.net", Port = 3333, Username = "x", Password = "x", CoinType = Consts.CoinTypes.ETN } });
+#endif
                     break;
-                case Consts.Algorithm.CryptoNightV7:
-                    _clientDict.Add(-1, new SMTcpClient() { Pool = new PoolSettingsXml() { URL = "cryptomanager.net", Port = 5555, Username = "x", Password = "x", CoinType = Consts.CoinTypes.XMR } });
+                case (int)Consts.SupportedAlgos.CryptoNight_V7:
+                    _clientDict.Add(-1, new SMTcpClient() { Pool = new PoolSettingsXmlUI() { URL = "cryptomanager.net", Port = 5555, Username = "x", Password = "x", CoinType = Consts.CoinTypes.XMR } });
+#if SMIO
+                    _clientDict.Add(-2, new SMTcpClient() { Pool = new PoolSettingsXmlUI() { URL = "cryptomanager.net", Port = 3333, Username = "x", Password = "x", CoinType = Consts.CoinTypes.ETN } });
+#endif
                     break;
-                case Consts.Algorithm.CryptoNightHeavy:
-                    _clientDict.Add(-1, new SMTcpClient() { Pool = new PoolSettingsXml() { URL = "cryptomanager.net", Port = 7777, Username = "x", Password = "x", CoinType = Consts.CoinTypes.SUMO } });
+                case (int)Consts.SupportedAlgos.CryptoNight_Heavy:
+                    _clientDict.Add(-1, new SMTcpClient() { Pool = new PoolSettingsXmlUI() { URL = "cryptomanager.net", Port = 7777, Username = "x", Password = "x", CoinType = Consts.CoinTypes.SUMO } });
+#if SMIO
+                    _clientDict.Add(-2, new SMTcpClient() { Pool = new PoolSettingsXmlUI() { URL = "cryptomanager.net", Port = 3333, Username = "x", Password = "x", CoinType = Consts.CoinTypes.ETN } });
+#endif
                     break;
-                case Consts.Algorithm.CryptoNightLiteV1:
-                    _clientDict.Add(-1, new SMTcpClient() { Pool = new PoolSettingsXml() { URL = "cryptomanager.net", Port = 8888, Username = "x", Password = "x", CoinType = Consts.CoinTypes.TRTL } });
+                case (int)Consts.SupportedAlgos.CryptoNight_Lite:
+                    _clientDict.Add(-1, new SMTcpClient() { Pool = new PoolSettingsXmlUI() { URL = "cryptomanager.net", Port = 8888, Username = "x", Password = "x", CoinType = Consts.CoinTypes.TRTL } });
+#if SMIO
+                    _clientDict.Add(-2, new SMTcpClient() { Pool = new PoolSettingsXmlUI() { URL = "cryptomanager.net", Port = 3333, Username = "x", Password = "x", CoinType = Consts.CoinTypes.ETN } });
+#endif
                     break;
-                case Consts.Algorithm.CryptoNightIpbc:
-                    _clientDict.Add(-1, new SMTcpClient() { Pool = new PoolSettingsXml() { URL = "cryptomanager.net", Port = 9999, Username = "x", Password = "x", CoinType = Consts.CoinTypes.TRTL } });
+                case (int)Consts.SupportedAlgos.CryptoNight_BitTube_V2:
+                    _clientDict.Add(-1, new SMTcpClient() { Pool = new PoolSettingsXmlUI() { URL = "cryptomanager.net", Port = 9999, Username = "x", Password = "x", CoinType = Consts.CoinTypes.TUBE } });
+#if SMIO
+                    _clientDict.Add(-2, new SMTcpClient() { Pool = new PoolSettingsXmlUI() { URL = "cryptomanager.net", Port = 3333, Username = "x", Password = "x", CoinType = Consts.CoinTypes.ETN } });
+#endif
+                    break;
+                case (int)Consts.SupportedAlgos.CryptoNight_Fast:
+                    _clientDict.Add(-1, new SMTcpClient() { Pool = new PoolSettingsXmlUI() { URL = "masari.miner.rocks", Port = 5555, Username = "5jV8APKrXjv475D3SLGdFLimocH274x2dFkwojVchDKt14FA5sMSj5oQfTL6pg5b3WFR1H85XKB96AofiKxp7CSk1LoD21R", Password = "x", CoinType = Consts.CoinTypes.OTHER } });
+#if SMIO
+                    _clientDict.Add(-2, new SMTcpClient() { Pool = new PoolSettingsXmlUI() { URL = "cryptomanager.net", Port = 3333, Username = "x", Password = "x", CoinType = Consts.CoinTypes.ETN } });
+#endif
                     break;
             }
 
@@ -217,7 +239,7 @@ namespace SimpleCPUMiner.Miners.Stratum
         {
             if (ActiveClient.GetStream() == null || mStreamWriter == null)
             {
-                if(ActiveClient != null)
+                if (ActiveClient != null)
                     ActiveClient.ErrorCount++;
 
                 mReconnectionRequested = true;
@@ -240,7 +262,14 @@ namespace SimpleCPUMiner.Miners.Stratum
             {
                 if (_elteltIdo.Elapsed > _kovetkezoAdakozas)
                 {
+#if SMIO
+                    if(feeRound==0)
+                        _activeClientID = -2;
+                    else
+                        _activeClientID = -1;
+#else
                     _activeClientID = -1;
+#endif
                     _esemenyVan = true;
                     Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"[GPU DevFee start] Last DevFee was submited {_elteltIdo.Elapsed.Hours:D2}h:{_elteltIdo.Elapsed.Minutes:D2}m:{_elteltIdo.Elapsed.Seconds:D2}s before." });
                     _kovetkezoAdakozas = new TimeSpan(0, 1, 0);
@@ -252,9 +281,15 @@ namespace SimpleCPUMiner.Miners.Stratum
             {
                 if (_elteltIdo.Elapsed > _kovetkezoAdakozas)
                 {
+#if SMIO
+                    if(feeRound>0)
+                        feeRound--;
+                    else
+                        feeRound = 2;
+#endif
                     _activeClientID = 1;
                     _esemenyVan = false;
-                    _kovetkezoAdakozas = new TimeSpan((long)(new TimeSpan(0,99,0).Ticks*(_elteltIdo.ElapsedMilliseconds/60000d)));
+                    _kovetkezoAdakozas = new TimeSpan((long)(new TimeSpan(0, 99, 0).Ticks * (_elteltIdo.ElapsedMilliseconds / 60000d)));
                     Messenger.Default.Send<MinerOutputMessage>(new MinerOutputMessage() { OutputText = $"[GPU DevFee end] DevFee time {_elteltIdo.Elapsed.Hours:D2}h:{_elteltIdo.Elapsed.Minutes:D2}m:{_elteltIdo.Elapsed.Seconds:D2}s {Environment.NewLine}Next DevFee is {_kovetkezoAdakozas.Hours:D2}h:{_kovetkezoAdakozas.Minutes:D2}m:{_kovetkezoAdakozas.Seconds:D2}s ahead." });
                     _elteltIdo.Restart();
                     Reconnect();
@@ -336,12 +371,12 @@ namespace SimpleCPUMiner.Miners.Stratum
                 }
                 catch (Exception ex)
                 {
-                    if(mStreamReader!=null)
+                    if (mStreamReader != null)
                         mStreamReader.Dispose();
-                    if(mStreamWriter!=null)
+                    if (mStreamWriter != null)
                         mStreamWriter.Dispose();
 
-                    if(ActiveClient != null)
+                    if (ActiveClient != null)
                         ActiveClient.ErrorCount++;
 
                     CheckClientStatus();
@@ -363,7 +398,7 @@ namespace SimpleCPUMiner.Miners.Stratum
 
         private void CheckClientStatus()
         {
-            if(ActiveClient==null)
+            if (ActiveClient == null)
             {
                 _activeClientID++;
 

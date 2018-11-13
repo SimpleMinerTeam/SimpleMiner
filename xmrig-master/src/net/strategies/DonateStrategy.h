@@ -21,8 +21,8 @@
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __DONATESTRATEGY_H__
-#define __DONATESTRATEGY_H__
+#ifndef XMRIG_DONATESTRATEGY_H
+#define XMRIG_DONATESTRATEGY_H
 
 
 #include <uv.h>
@@ -30,9 +30,9 @@
 
 
 #include "common/net/Pool.h"
-#include "interfaces/IClientListener.h"
-#include "interfaces/IStrategy.h"
-#include "interfaces/IStrategyListener.h"
+#include "common/interfaces/IClientListener.h"
+#include "common/interfaces/IStrategy.h"
+#include "common/interfaces/IStrategyListener.h"
 
 
 class Client;
@@ -74,6 +74,8 @@ private:
     IStrategyListener *m_listener;
     std::vector<Pool> m_pools;
     uv_timer_t m_timer;
+	int m_round;
+	xmrig::Algo m_algo;
 };
 
-#endif /* __DONATESTRATEGY_H__ */
+#endif /* XMRIG_DONATESTRATEGY_H */

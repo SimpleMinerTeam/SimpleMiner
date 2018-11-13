@@ -12,5 +12,11 @@
         public int StartingDelayInSec { get; set; } //Ha az IsAutostartMining értéke true, akkor meg lehet adni hány mp után kezdjen el bányászni a program
         public bool IsMinimizeToTray { get; set; } //Ha az IsAutostartMining értéke true, akkor megadható, hogy a program minimize módban induljon
         public bool IsCPUMiningEnabled { get; set; } //CPU bányászás engedélyezve van-e
+        public string VersionNumber { get; set; } //SM verzió száma
+        public bool IsRemoteManagementEnabled { get; set; } //távvezérlés engedélyezése
+        public string RemoteManagerWorkerName { get; set; }
+        public string RemoteManagerHost { get; set; }
+        public bool IsRemotePoolListEnabled { get; set; }
+        public bool IsAutoUpdateEnabled { get; set; }
     }
 }
